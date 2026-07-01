@@ -1,25 +1,12 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { routeErrorResponse } from "@/lib/api";
 import {
   createBudgetEntry,
   listBudgetEntries,
-  BudgetPermissionError,
 } from "@/features/budget/budget-service";
 import { budgetFiltersSchema } from "@/features/budget/budget-schemas";
 import { getCurrentSession } from "@/server/auth/session";
 
-function errorResponse(error: unknown) {
-  if (error instanceof ZodError) {
-    return NextResponse.json(
-      { error: "Validation invalide.", details: error.issues },
-      { status: 400 },
-    );
-  }
-  if (error instanceof BudgetPermissionError) {
-    return NextResponse.json({ error: error.message }, { status: 403 });
-  }
-  return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
-}
 
 export async function GET(request: Request) {
   const session = await getCurrentSession();
@@ -37,7 +24,7 @@ export async function GET(request: Request) {
     });
     return NextResponse.json({ entries: await listBudgetEntries(filters) });
   } catch (error) {
-    return errorResponse(error);
+    return routeErrorResponse(error);
   }
 }
 
@@ -51,6 +38,6 @@ export async function POST(request: Request) {
     const entry = await createBudgetEntry(session, await request.json());
     return NextResponse.json({ entry }, { status: 201 });
   } catch (error) {
-    return errorResponse(error);
+    return routeErrorResponse(error);
   }
 }

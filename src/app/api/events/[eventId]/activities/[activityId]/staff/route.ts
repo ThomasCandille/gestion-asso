@@ -1,28 +1,11 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { routeErrorResponse } from "@/lib/api";
 import {
   registerAsStaff,
   unregisterAsStaff,
-  ActivityPermissionError,
-  ActivityRuleError,
 } from "@/features/events/activity-service";
 import { getCurrentSession } from "@/server/auth/session";
 
-function errorResponse(error: unknown) {
-  if (error instanceof ZodError) {
-    return NextResponse.json(
-      { error: "Validation invalide.", details: error.issues },
-      { status: 400 },
-    );
-  }
-  if (error instanceof ActivityPermissionError) {
-    return NextResponse.json({ error: error.message }, { status: 403 });
-  }
-  if (error instanceof ActivityRuleError) {
-    return NextResponse.json({ error: error.message }, { status: 409 });
-  }
-  return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
-}
 
 type Params = { params: Promise<{ eventId: string; activityId: string }> };
 
@@ -50,7 +33,7 @@ export async function POST(request: Request, { params }: Params) {
     );
     return NextResponse.json({ activity });
   } catch (error) {
-    return errorResponse(error);
+    return routeErrorResponse(error);
   }
 }
 
@@ -76,6 +59,6 @@ export async function DELETE(request: Request, { params }: Params) {
     );
     return NextResponse.json({ activity });
   } catch (error) {
-    return errorResponse(error);
+    return routeErrorResponse(error);
   }
 }

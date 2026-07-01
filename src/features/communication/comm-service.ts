@@ -4,6 +4,7 @@ import type { AppSession } from "@/server/auth/session";
 import { hasPermission } from "@/server/permissions";
 import type { CommunicationStatus, PostType } from "./comm-rules";
 import { campaignFormSchema, postFormSchema } from "./comm-schemas";
+import { createCampaignSheet } from "@/server/integrations/comm-sheet";
 
 export class CommPermissionError extends Error {
   constructor(message = "Action communication non autorisée.") {
@@ -48,6 +49,8 @@ const campaignSelect = {
   title: true,
   description: true,
   status: true,
+  sheetId: true,
+  sheetUrl: true,
   createdAt: true,
   updatedAt: true,
   event: { select: { id: true, title: true, type: true, startsAt: true, status: true } },
@@ -87,6 +90,8 @@ export type CampaignDto = {
   title: string;
   description: string | null;
   status: CommunicationStatus;
+  sheetId: string | null;
+  sheetUrl: string | null;
   createdAt: string;
   posts: PostDto[];
 };
@@ -120,6 +125,8 @@ function toCampaignDto(row: CampaignRow): CampaignDto {
     title: row.title,
     description: row.description,
     status: row.status as CommunicationStatus,
+    sheetId: row.sheetId,
+    sheetUrl: row.sheetUrl,
     createdAt: row.createdAt.toISOString(),
     posts: row.posts.map(toPostDto),
   };
@@ -148,7 +155,24 @@ export async function createCampaign(actor: AppSession, input: unknown): Promise
     },
     select: campaignSelect,
   });
-  return toCampaignDto(row);
+
+  const dto = toCampaignDto(row);
+
+  try {
+    const sheet = await createCampaignSheet(dto);
+    if (sheet) {
+      await prisma.communicationCampaign.update({
+        where: { id: row.id },
+        data: { sheetId: sheet.sheetId, sheetUrl: sheet.sheetUrl },
+      });
+      dto.sheetId = sheet.sheetId;
+      dto.sheetUrl = sheet.sheetUrl;
+    }
+  } catch {
+    // L'échec de la création du Sheet ne bloque pas la création de la campagne
+  }
+
+  return dto;
 }
 
 export async function updateCampaign(

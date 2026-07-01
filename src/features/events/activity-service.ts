@@ -3,9 +3,23 @@ import { prisma } from "@/server/db/client";
 import type { AppSession } from "@/server/auth/session";
 import { hasPermission } from "@/server/permissions";
 import type { EventType } from "./event-rules";
+import { hasEventTypeAccess } from "./event-rules";
 import { activityFormSchema } from "./activity-schemas";
+import { parseEurosToCents } from "@/lib/formats";
+import { createActivitySheet } from "@/server/integrations/activities-sheet";
 
-const activityInclude = {
+const activitySelect = {
+  id: true,
+  eventId: true,
+  title: true,
+  description: true,
+  rules: true,
+  prizes: true,
+  budgetCents: true,
+  sheetId: true,
+  sheetUrl: true,
+  createdAt: true,
+  updatedAt: true,
   staff: {
     select: {
       memberId: true,
@@ -14,10 +28,10 @@ const activityInclude = {
       },
     },
   },
-} satisfies Prisma.ActivityInclude;
+} satisfies Prisma.ActivitySelect;
 
 type ActivityRow = Prisma.ActivityGetPayload<{
-  include: typeof activityInclude;
+  select: typeof activitySelect;
 }>;
 
 export type ActivityDto = {
@@ -28,6 +42,8 @@ export type ActivityDto = {
   rules: string | null;
   prizes: string | null;
   budgetCents: number;
+  sheetId: string | null;
+  sheetUrl: string | null;
   staff: { memberId: string; firstName: string; lastName: string }[];
   createdAt: string;
   updatedAt: string;
@@ -56,6 +72,8 @@ function toActivityDto(activity: ActivityRow): ActivityDto {
     rules: activity.rules,
     prizes: activity.prizes,
     budgetCents: activity.budgetCents,
+    sheetId: activity.sheetId,
+    sheetUrl: activity.sheetUrl,
     staff: activity.staff.map((s) => ({
       memberId: s.memberId,
       firstName: s.member.firstName,
@@ -67,18 +85,9 @@ function toActivityDto(activity: ActivityRow): ActivityDto {
 }
 
 function assertCanManageActivities(actor: AppSession, eventType: EventType) {
-  if (!hasPermission(actor.role, "events:manage")) {
-    throw new ActivityPermissionError();
-  }
-  if (actor.role === "POLE_LEAD") {
-    const allowed =
-      (eventType === "INTERNAL" && actor.poles.includes("INTERNE")) ||
-      (eventType === "EXTERNAL" && actor.poles.includes("EXTERNE"));
-    if (!allowed) {
-      throw new ActivityPermissionError(
-        "Vous n'avez pas acces aux activites de ce type d'evenement.",
-      );
-    }
+  if (!hasPermission(actor.role, "events:manage")) throw new ActivityPermissionError();
+  if (actor.role === "POLE_LEAD" && !hasEventTypeAccess(actor, eventType)) {
+    throw new ActivityPermissionError("Vous n'avez pas acces aux activites de ce type d'evenement.");
   }
 }
 
@@ -89,10 +98,7 @@ function canRegisterAsStaff(actor: AppSession, eventType: EventType): boolean {
   return false;
 }
 
-function parseBudgetCents(budgetEuros: string): number {
-  const value = parseFloat(budgetEuros.replace(",", "."));
-  return isNaN(value) ? 0 : Math.round(value * 100);
-}
+
 
 async function getEventType(eventId: string): Promise<EventType> {
   const event = await prisma.event.findUniqueOrThrow({
@@ -105,7 +111,7 @@ async function getEventType(eventId: string): Promise<EventType> {
 export async function listActivities(eventId: string) {
   const activities = await prisma.activity.findMany({
     where: { eventId },
-    include: activityInclude,
+    select: activitySelect,
     orderBy: { createdAt: "asc" },
   });
   return activities.map(toActivityDto);
@@ -121,6 +127,11 @@ export async function createActivity(
 
   const parsed = activityFormSchema.parse(input);
 
+  const event = await prisma.event.findUniqueOrThrow({
+    where: { id: eventId },
+    select: { title: true, type: true },
+  });
+
   const activity = await prisma.activity.create({
     data: {
       eventId,
@@ -128,12 +139,28 @@ export async function createActivity(
       description: parsed.description || null,
       rules: parsed.rules || null,
       prizes: parsed.prizes || null,
-      budgetCents: parseBudgetCents(parsed.budgetEuros),
+      budgetCents: parseEurosToCents(parsed.budgetEuros),
     },
-    include: activityInclude,
+    select: activitySelect,
   });
 
-  return toActivityDto(activity);
+  const dto = toActivityDto(activity);
+
+  try {
+    const sheet = await createActivitySheet(dto, event.title, eventType);
+    if (sheet) {
+      await prisma.activity.update({
+        where: { id: activity.id },
+        data: { sheetId: sheet.sheetId, sheetUrl: sheet.sheetUrl },
+      });
+      dto.sheetId = sheet.sheetId;
+      dto.sheetUrl = sheet.sheetUrl;
+    }
+  } catch {
+    // L'échec de la création du Sheet ne bloque pas la création de l'activité
+  }
+
+  return dto;
 }
 
 export async function updateActivity(
@@ -154,9 +181,9 @@ export async function updateActivity(
       description: parsed.description || null,
       rules: parsed.rules || null,
       prizes: parsed.prizes || null,
-      budgetCents: parseBudgetCents(parsed.budgetEuros),
+      budgetCents: parseEurosToCents(parsed.budgetEuros),
     },
-    include: activityInclude,
+    select: activitySelect,
   });
 
   return toActivityDto(activity);
@@ -208,7 +235,7 @@ export async function registerAsStaff(
 
   const activity = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    include: activityInclude,
+    select: activitySelect,
   });
 
   return toActivityDto(activity);
@@ -240,7 +267,7 @@ export async function unregisterAsStaff(
 
   const activity = await prisma.activity.findUniqueOrThrow({
     where: { id: activityId },
-    include: activityInclude,
+    select: activitySelect,
   });
 
   return toActivityDto(activity);

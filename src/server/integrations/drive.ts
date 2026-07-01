@@ -58,3 +58,10 @@ export function getSheetsClient() {
   if (!auth) return null;
   return google.sheets({ version: "v4", auth });
 }
+
+// Utilisé pour créer des sheets — OAuth2 user credentials (quota du compte Gmail)
+export function getSheetsWriteClient() {
+  const auth = getOAuth2Auth();
+  if (!auth) return null;
+  return google.sheets({ version: "v4", auth });
+}

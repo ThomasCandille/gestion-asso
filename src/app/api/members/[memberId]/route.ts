@@ -1,32 +1,12 @@
 import { NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { routeErrorResponse } from "@/lib/api";
 import {
   deactivateMember,
   getMemberById,
-  MemberPermissionError,
-  MemberRuleError,
   updateMember,
 } from "@/features/members/member-service";
 import { getCurrentSession } from "@/server/auth/session";
 
-function errorResponse(error: unknown) {
-  if (error instanceof ZodError) {
-    return NextResponse.json(
-      { error: "Validation invalide.", details: error.issues },
-      { status: 400 },
-    );
-  }
-
-  if (error instanceof MemberPermissionError) {
-    return NextResponse.json({ error: error.message }, { status: 403 });
-  }
-
-  if (error instanceof MemberRuleError) {
-    return NextResponse.json({ error: error.message }, { status: 409 });
-  }
-
-  return NextResponse.json({ error: "Erreur serveur." }, { status: 500 });
-}
 
 type RouteContext = {
   params: Promise<{
@@ -69,7 +49,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const member = await updateMember(session, memberId, await request.json());
     return NextResponse.json({ member });
   } catch (error) {
-    return errorResponse(error);
+    return routeErrorResponse(error);
   }
 }
 
@@ -88,6 +68,6 @@ export async function DELETE(_request: Request, context: RouteContext) {
     const member = await deactivateMember(session, memberId);
     return NextResponse.json({ member });
   } catch (error) {
-    return errorResponse(error);
+    return routeErrorResponse(error);
   }
 }

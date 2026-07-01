@@ -137,6 +137,8 @@ model Event {
   startsAt    DateTime?
   endsAt      DateTime?
   budgetCents Int         @default(0)
+  sheetId     String?
+  sheetUrl    String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -157,6 +159,8 @@ model Activity {
   rules       String?
   prizes      String?
   budgetCents Int      @default(0)
+  sheetId     String?
+  sheetUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -214,6 +218,8 @@ model CommunicationCampaign {
   title       String
   description String?
   status      CommunicationStatus @default(DRAFT)
+  sheetId     String?
+  sheetUrl    String?
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
 

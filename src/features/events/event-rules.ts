@@ -39,3 +39,13 @@ export const eventStatusStyles: Record<EventStatus, string> = {
 export function isTerminalStatus(status: EventStatus) {
   return status === "DONE" || status === "CANCELED";
 }
+
+export function hasEventTypeAccess(
+  actor: { poles: string[] },
+  eventType: EventType,
+): boolean {
+  return (
+    (eventType === "INTERNAL" && actor.poles.includes("INTERNE")) ||
+    (eventType === "EXTERNAL" && actor.poles.includes("EXTERNE"))
+  );
+}

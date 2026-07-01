@@ -21,6 +21,7 @@ import {
   type MemberFilters,
   type MemberFormInput,
 } from "./member-schemas";
+import { toOptionalDate } from "@/lib/formats";
 
 const memberInclude = {
   memberPoles: {
@@ -193,9 +194,6 @@ export async function getMemberById(memberId: string) {
   return member ? toMemberDto(member) : null;
 }
 
-function normalizeOptionalDate(value: string | undefined) {
-  return value ? new Date(value) : null;
-}
 
 export async function createMember(actor: AppSession, input: unknown) {
   assertCanCreateMember(actor);
@@ -217,7 +215,7 @@ export async function createMember(actor: AppSession, input: unknown) {
       status: parsedInput.status,
       role: parsedInput.role,
       photoUrl: parsedInput.photoUrl || null,
-      joinedAt: normalizeOptionalDate(parsedInput.joinedAt),
+      joinedAt: toOptionalDate(parsedInput.joinedAt),
       internalNotes: parsedInput.internalNotes || null,
       discordUsername: parsedInput.discordUsername || null,
       passwordHash,
@@ -285,7 +283,7 @@ export async function updateMember(
       status: parsedInput.status,
       role: parsedInput.role,
       photoUrl: parsedInput.photoUrl || null,
-      joinedAt: normalizeOptionalDate(parsedInput.joinedAt),
+      joinedAt: toOptionalDate(parsedInput.joinedAt),
       internalNotes: parsedInput.internalNotes || null,
       discordUsername: parsedInput.discordUsername || null,
       memberPoles: {

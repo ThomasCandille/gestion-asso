@@ -3,6 +3,7 @@ import { prisma } from "@/server/db/client";
 import type { AppSession } from "@/server/auth/session";
 import { hasPermission } from "@/server/permissions";
 import type { EventStatus, EventType } from "../events/event-rules";
+import { parseEurosToCents } from "@/lib/formats";
 import type { BudgetEntryType } from "./budget-rules";
 import {
   budgetEntryFormSchema,
@@ -105,10 +106,7 @@ function toEntryDto(row: EntryRow): BudgetEntryDto {
   };
 }
 
-function parseCents(euros: string): number {
-  const v = parseFloat(euros.replace(",", "."));
-  return isNaN(v) ? 0 : Math.round(v * 100);
-}
+
 
 export async function listBudgetEntries(filters: BudgetFilters = {}): Promise<BudgetEntryDto[]> {
   const f = budgetFiltersSchema.parse(filters);
@@ -278,7 +276,7 @@ export async function createBudgetEntry(actor: AppSession, input: unknown): Prom
   const createData: Prisma.BudgetEntryUncheckedCreateInput = {
     type: parsed.type,
     label: parsed.label,
-    amountCents: parseCents(parsed.amountEuros),
+    amountCents: parseEurosToCents(parsed.amountEuros),
     occurredAt: parsed.occurredAt ? new Date(parsed.occurredAt) : null,
     eventId: parsed.eventId ?? null,
     activityId: parsed.activityId ?? null,
@@ -305,7 +303,7 @@ export async function updateBudgetEntry(
   const updateData: Prisma.BudgetEntryUncheckedUpdateInput = {
     type: parsed.type,
     label: parsed.label,
-    amountCents: parseCents(parsed.amountEuros),
+    amountCents: parseEurosToCents(parsed.amountEuros),
     occurredAt: parsed.occurredAt ? new Date(parsed.occurredAt) : null,
     eventId: parsed.eventId ?? null,
     activityId: parsed.activityId ?? null,
