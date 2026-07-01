@@ -1,8 +1,8 @@
 import { env } from "@/server/env";
-import type { CampaignDto } from "@/features/communication/comm-service";
+import type { CampaignDto } from "@/features/communication/communication-service";
 import { eventTypeLabels, eventStatusLabels } from "@/features/events/event-rules";
-import type { CommunicationStatus } from "@/features/communication/comm-rules";
-import { communicationStatusLabels } from "@/features/communication/comm-rules";
+import type { CommunicationStatus } from "@/features/communication/communication-rules";
+import { communicationStatusLabels } from "@/features/communication/communication-rules";
 import { buildSheet, formatDate, SHEET_COLORS } from "./sheet-builder";
 
 export async function createCampaignSheet(

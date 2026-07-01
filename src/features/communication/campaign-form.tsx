@@ -5,8 +5,8 @@ import {
   communicationStatusValues,
   communicationStatusLabels,
   type CommunicationStatus,
-} from "./comm-rules";
-import type { CampaignFormInput } from "./comm-schemas";
+} from "./communication-rules";
+import type { CampaignFormInput } from "./communication-schemas";
 
 type EventOption = { id: string; title: string };
 

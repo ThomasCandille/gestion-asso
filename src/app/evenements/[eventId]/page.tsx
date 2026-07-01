@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { EventDashboardClient } from "@/features/events/event-dashboard-client";
 import { getEventById } from "@/features/events/event-service";
-import { normalizeEventView } from "@/features/events/event-view";
+import { normalizeEventView } from "@/features/events/event-dto";
 import { listActivities } from "@/features/events/activity-service";
 import { listMembers } from "@/features/members/member-service";
 import { getCurrentSession } from "@/server/auth/session";
@@ -29,7 +29,8 @@ export default async function EventDashboardPage({ params }: Props) {
     getCurrentSession(),
   ]);
 
-  if (!event || !session) notFound();
+  if (!event) notFound();
+  if (!session) redirect("/auth/login");
 
   const [activities, allMembers] = await Promise.all([
     listActivities(eventId),

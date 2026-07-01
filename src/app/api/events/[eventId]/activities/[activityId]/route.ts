@@ -11,14 +11,9 @@ type Params = { params: Promise<{ eventId: string; activityId: string }> };
 
 export async function PATCH(request: Request, { params }: Params) {
   const session = await getCurrentSession();
-
   if (!session) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { eventId, activityId } = await params;
 
   try {
@@ -36,14 +31,9 @@ export async function PATCH(request: Request, { params }: Params) {
 
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await getCurrentSession();
-
   if (!session) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { eventId, activityId } = await params;
 
   try {

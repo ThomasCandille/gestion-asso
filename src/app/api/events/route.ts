@@ -9,15 +9,9 @@ import { getCurrentSession } from "@/server/auth/session";
 
 
 export async function GET(request: Request) {
-  const session = await getCurrentSession();
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
+  if (!await getCurrentSession()) {
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   try {
     const searchParams = new URL(request.url).searchParams;
     const filters = eventFiltersSchema.parse({
@@ -34,14 +28,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await getCurrentSession();
-
   if (!session) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   try {
     const event = await createEvent(session, await request.json());
     return NextResponse.json({ event }, { status: 201 });

@@ -10,15 +10,9 @@ import { getCurrentSession } from "@/server/auth/session";
 type Params = { params: Promise<{ eventId: string }> };
 
 export async function GET(_request: Request, { params }: Params) {
-  const session = await getCurrentSession();
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
+  if (!await getCurrentSession()) {
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { eventId } = await params;
 
   try {
@@ -30,14 +24,9 @@ export async function GET(_request: Request, { params }: Params) {
 
 export async function POST(request: Request, { params }: Params) {
   const session = await getCurrentSession();
-
   if (!session) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { eventId } = await params;
 
   try {

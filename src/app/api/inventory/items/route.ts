@@ -9,9 +9,9 @@ import {
 import type { InventoryCategory } from "@/features/inventory/inventory-rules";
 
 export async function GET() {
-  const session = await getCurrentSession();
-  if (!session) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-
+  if (!await getCurrentSession()) {
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
+  }
   const items = await listInventoryItems();
   return NextResponse.json({ items });
 }

@@ -8,8 +8,8 @@ import {
   postTypeLabels,
   type CommunicationStatus,
   type PostType,
-} from "./comm-rules";
-import type { PostFormInput } from "./comm-schemas";
+} from "./communication-rules";
+import type { PostFormInput } from "./communication-schemas";
 
 type MemberOption = { id: string; firstName: string; lastName: string };
 

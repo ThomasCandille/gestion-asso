@@ -1,4 +1,4 @@
-import { getDriveWriteClient, getSheetsWriteClient } from "./drive";
+import { getDriveWriteClient, getSheetsWriteClient } from "./google-clients";
 import { env } from "@/server/env";
 import type { EventType } from "@/features/events/event-rules";
 

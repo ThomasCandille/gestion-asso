@@ -14,8 +14,8 @@ import {
 } from "./event-rules";
 import { activityFormSchema } from "./activity-schemas";
 import type { ActivityDto } from "./activity-service";
-import type { EventView } from "./event-view";
-import { formatBudget, formatDate } from "./event-format";
+import type { EventView } from "./event-dto";
+import { formatBudget, formatDate } from "./event-formatters";
 import { ActivityCard, type MemberOption } from "./activity-card";
 import { ActivityFormSection, type ActivityFormState } from "./activity-form";
 

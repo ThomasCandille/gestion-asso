@@ -1,16 +1,17 @@
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/server/auth/session";
 import { hasPermission } from "@/server/permissions";
-import { listCampaigns } from "@/features/communication/comm-service";
+import { listCampaigns } from "@/features/communication/communication-service";
 import { listEvents } from "@/features/events/event-service";
 import { listMembers } from "@/features/members/member-service";
-import { CommClient } from "@/features/communication/comm-client";
+import { CommClient } from "@/features/communication/communication-client";
 
 export const metadata = { title: "Communication — IIMPACT" };
 
 export default async function CommunicationPage() {
   const session = await getCurrentSession();
   if (!session) redirect("/auth/login");
+
 
   const canManage = hasPermission(session.role, "communication:manage");
 

@@ -1,5 +1,5 @@
 import { Readable } from "stream";
-import { getDriveClient, getDriveWriteClient } from "@/server/integrations/drive";
+import { getDriveClient, getDriveWriteClient } from "@/server/integrations/google-clients";
 import { env } from "@/server/env";
 import type { AppSession } from "@/server/auth/session";
 import { hasPermission } from "@/server/permissions";

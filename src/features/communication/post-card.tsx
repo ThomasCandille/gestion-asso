@@ -7,8 +7,8 @@ import {
   postTypeLabels,
   postTypeEmoji,
   communicationStatusLabels,
-} from "./comm-rules";
-import type { PostDto, MemberRef } from "./comm-service";
+} from "./communication-rules";
+import type { PostDto, MemberRef } from "./communication-service";
 
 type MemberOption = { id: string; firstName: string; lastName: string };
 

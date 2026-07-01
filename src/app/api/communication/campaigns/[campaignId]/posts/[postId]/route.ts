@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { routeErrorResponse } from "@/lib/api";
-import { updatePost, deletePost } from "@/features/communication/comm-service";
+import { updatePost, deletePost } from "@/features/communication/communication-service";
 import { getCurrentSession } from "@/server/auth/session";
 
 
@@ -9,9 +9,8 @@ type Params = { params: Promise<{ postId: string }> };
 export async function PATCH(request: Request, { params }: Params) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { postId } = await params;
   try {
     const post = await updatePost(session, postId, await request.json());
@@ -24,9 +23,8 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { postId } = await params;
   try {
     await deletePost(session, postId);

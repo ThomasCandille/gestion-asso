@@ -2,9 +2,9 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 import type { AppSession } from "@/server/auth/session";
 import { hasPermission } from "@/server/permissions";
-import type { CommunicationStatus, PostType } from "./comm-rules";
-import { campaignFormSchema, postFormSchema } from "./comm-schemas";
-import { createCampaignSheet } from "@/server/integrations/comm-sheet";
+import type { CommunicationStatus, PostType } from "./communication-rules";
+import { campaignFormSchema, postFormSchema } from "./communication-schemas";
+import { createCampaignSheet } from "@/server/integrations/communication-sheet";
 
 export class CommPermissionError extends Error {
   constructor(message = "Action communication non autorisée.") {

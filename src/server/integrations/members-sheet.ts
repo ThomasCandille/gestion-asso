@@ -1,4 +1,4 @@
-import { getSheetsClient } from "./drive";
+import { getSheetsClient } from "./google-clients";
 import { env } from "@/server/env";
 import type { MemberDto } from "@/features/members/member-service";
 

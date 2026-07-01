@@ -9,7 +9,7 @@ import { DocumentsClient } from "@/features/documents/documents-client";
 
 export default async function DocumentsPage() {
   const session = await getCurrentSession();
-  if (!session) redirect("/");
+  if (!session) redirect("/auth/login");
 
   const accessibleKeys = getAccessibleFolderKeys(session.role, session.poles);
   const accessibleFolders = adminFolders.filter((f) =>

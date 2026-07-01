@@ -12,9 +12,8 @@ type Params = { params: Promise<{ entryId: string }> };
 export async function PATCH(request: Request, { params }: Params) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { entryId } = await params;
   try {
     const entry = await updateBudgetEntry(session, entryId, await request.json());
@@ -27,9 +26,8 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { entryId } = await params;
   try {
     await deleteBudgetEntry(session, entryId);

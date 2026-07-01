@@ -15,15 +15,9 @@ type RouteContext = {
 };
 
 export async function GET(_request: Request, context: RouteContext) {
-  const session = await getCurrentSession();
-
-  if (!session) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
+  if (!await getCurrentSession()) {
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { memberId } = await context.params;
   const member = await getMemberById(memberId);
 
@@ -36,14 +30,9 @@ export async function GET(_request: Request, context: RouteContext) {
 
 export async function PATCH(request: Request, context: RouteContext) {
   const session = await getCurrentSession();
-
   if (!session) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   try {
     const { memberId } = await context.params;
     const member = await updateMember(session, memberId, await request.json());
@@ -55,14 +44,9 @@ export async function PATCH(request: Request, context: RouteContext) {
 
 export async function DELETE(_request: Request, context: RouteContext) {
   const session = await getCurrentSession();
-
   if (!session) {
-    return NextResponse.json(
-      { error: "Authentification requise." },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   try {
     const { memberId } = await context.params;
     const member = await deactivateMember(session, memberId);

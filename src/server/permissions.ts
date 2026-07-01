@@ -28,7 +28,7 @@ const permissionByRole: Record<Role, Permission[]> = {
   TREASURER: ["members:manage", "budget:manage", "documents:manage"],
   VICE_TREASURER: ["members:manage", "budget:manage", "documents:manage"],
   SECRETARY: ["members:manage", "events:manage", "documents:manage"],
-  POLE_LEAD: ["members:manage", "events:manage", "documents:manage"],
+  POLE_LEAD: ["events:manage", "documents:manage"],
   MEMBER: [],
 };
 

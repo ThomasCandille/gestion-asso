@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  ArrowLeft,
   ChevronDown,
   ChevronRight,
   ExternalLink,
@@ -15,6 +16,7 @@ import {
   Presentation,
   Table,
 } from "lucide-react";
+import Link from "next/link";
 import { Modal } from "@/lib/modal";
 import { readApiError } from "@/lib/api";
 import type { AdminFolder, DriveFile } from "./documents-rules";
@@ -264,7 +266,16 @@ export function DocumentsClient({ accessibleFolders, canUpload }: Props) {
     <main className="min-h-screen bg-zinc-50">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-zinc-500">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-800 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:translate-y-0"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Dashboard
+            </Link>
+          </div>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.24em] text-zinc-500">
             IIMPACT — Documents
           </p>
           <h1 className="mt-1 text-2xl font-semibold text-zinc-950">

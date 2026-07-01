@@ -32,12 +32,13 @@ import {
   normalizeEventView,
   type EventView,
   type EventViewPayload,
-} from "./event-view";
-import { formatBudget, formatDate } from "./event-format";
+} from "./event-dto";
+import { formatBudget, formatDate } from "./event-formatters";
 import { EventFormSection, type EventFormState } from "./event-form";
 
 type EventsClientProps = {
   initialEvents: EventView[];
+  canManage: boolean;
 };
 
 const emptyForm: EventFormState = {
@@ -64,7 +65,7 @@ function toFormState(event: EventView): EventFormState {
   };
 }
 
-export function EventsClient({ initialEvents }: EventsClientProps) {
+export function EventsClient({ initialEvents, canManage }: EventsClientProps) {
   const [events, setEvents] = useState(initialEvents);
   const [selectedEventId, setSelectedEventId] = useState(
     initialEvents[0]?.id ?? null,
@@ -235,14 +236,16 @@ export function EventsClient({ initialEvents }: EventsClientProps) {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={startCreate}
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-zinc-800 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 active:translate-y-0"
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              Nouvel evenement
-            </button>
+            {canManage && (
+              <button
+                type="button"
+                onClick={startCreate}
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-zinc-800 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 active:translate-y-0"
+              >
+                <Plus className="h-4 w-4" aria-hidden />
+                Nouvel evenement
+              </button>
+            )}
             <Link
               href="/"
               className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-800 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:translate-y-0"
@@ -421,30 +424,34 @@ export function EventsClient({ initialEvents }: EventsClientProps) {
                               <LayoutDashboard className="h-3.5 w-3.5" aria-hidden />
                               Dashboard
                             </Link>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                startEdit(event);
-                              }}
-                              disabled={isTerminal}
-                              className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              <Edit3 className="h-3.5 w-3.5" aria-hidden />
-                              Modifier
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                cancelEventById(event.id);
-                              }}
-                              disabled={isSaving || isTerminal}
-                              className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              <Ban className="h-3.5 w-3.5" aria-hidden />
-                              Annuler
-                            </button>
+                            {canManage && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    startEdit(event);
+                                  }}
+                                  disabled={isTerminal}
+                                  className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  <Edit3 className="h-3.5 w-3.5" aria-hidden />
+                                  Modifier
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cancelEventById(event.id);
+                                  }}
+                                  disabled={isSaving || isTerminal}
+                                  className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                  <Ban className="h-3.5 w-3.5" aria-hidden />
+                                  Annuler
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -500,22 +507,24 @@ export function EventsClient({ initialEvents }: EventsClientProps) {
         </aside>
       </div>
 
-      <Modal
-        open={showForm}
-        title={editingEventId ? "Modifier l'evenement" : "Nouvel evenement"}
-        onClose={() => setShowForm(false)}
-      >
-        <EventFormSection
-          editingEventId={editingEventId}
-          form={form}
-          errors={errors}
-          feedback={feedback}
-          isSaving={isSaving}
+      {canManage && (
+        <Modal
+          open={showForm}
+          title={editingEventId ? "Modifier l'evenement" : "Nouvel evenement"}
           onClose={() => setShowForm(false)}
-          onSubmit={submitEvent}
-          onUpdateForm={updateForm}
-        />
-      </Modal>
+        >
+          <EventFormSection
+            editingEventId={editingEventId}
+            form={form}
+            errors={errors}
+            feedback={feedback}
+            isSaving={isSaving}
+            onClose={() => setShowForm(false)}
+            onSubmit={submitEvent}
+            onUpdateForm={updateForm}
+          />
+        </Modal>
+      )}
     </main>
   );
 }

@@ -2,8 +2,8 @@
 
 import { ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/lib/ui";
-import { campaignStatusStyles, communicationStatusLabels } from "./comm-rules";
-import type { CampaignDto, PostDto } from "./comm-service";
+import { campaignStatusStyles, communicationStatusLabels } from "./communication-rules";
+import type { CampaignDto, PostDto } from "./communication-service";
 import { PostCard } from "./post-card";
 
 type MemberOption = { id: string; firstName: string; lastName: string };

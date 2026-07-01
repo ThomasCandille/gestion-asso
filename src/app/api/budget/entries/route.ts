@@ -9,11 +9,9 @@ import { getCurrentSession } from "@/server/auth/session";
 
 
 export async function GET(request: Request) {
-  const session = await getCurrentSession();
-  if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+  if (!await getCurrentSession()) {
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   try {
     const sp = new URL(request.url).searchParams;
     const filters = budgetFiltersSchema.parse({
@@ -31,9 +29,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   try {
     const entry = await createBudgetEntry(session, await request.json());
     return NextResponse.json({ entry }, { status: 201 });

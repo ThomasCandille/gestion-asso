@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { routeErrorResponse } from "@/lib/api";
-import { addAssignee, removeAssignee } from "@/features/communication/comm-service";
+import { addAssignee, removeAssignee } from "@/features/communication/communication-service";
 import { getCurrentSession } from "@/server/auth/session";
 
 
@@ -9,9 +9,8 @@ type Params = { params: Promise<{ postId: string }> };
 export async function POST(request: Request, { params }: Params) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { postId } = await params;
   try {
     const { memberId } = await request.json();
@@ -25,9 +24,8 @@ export async function POST(request: Request, { params }: Params) {
 export async function DELETE(request: Request, { params }: Params) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { postId } = await params;
   try {
     const { memberId } = await request.json();

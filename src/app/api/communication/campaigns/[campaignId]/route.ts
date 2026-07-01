@@ -3,7 +3,7 @@ import { routeErrorResponse } from "@/lib/api";
 import {
   updateCampaign,
   deleteCampaign,
-} from "@/features/communication/comm-service";
+} from "@/features/communication/communication-service";
 import { getCurrentSession } from "@/server/auth/session";
 
 
@@ -12,9 +12,8 @@ type Params = { params: Promise<{ campaignId: string }> };
 export async function PATCH(request: Request, { params }: Params) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { campaignId } = await params;
   try {
     const campaign = await updateCampaign(session, campaignId, await request.json());
@@ -27,9 +26,8 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_request: Request, { params }: Params) {
   const session = await getCurrentSession();
   if (!session) {
-    return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
   }
-
   const { campaignId } = await params;
   try {
     await deleteCampaign(session, campaignId);

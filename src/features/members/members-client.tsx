@@ -20,13 +20,14 @@ import {
   normalizeMemberView,
   type MemberView,
   type MemberViewPayload,
-} from "./member-view";
+} from "./member-dto";
 import { MemberTable, type MemberFiltersState } from "./member-table";
 import { MemberFormSection } from "./member-form";
 import type { MemberFormInput } from "./member-schemas";
 
 type MembersClientProps = {
   initialMembers: MemberView[];
+  canManage: boolean;
 };
 
 const emptyForm: MemberFormInput = {
@@ -88,7 +89,7 @@ function toFormState(member: MemberView): MemberFormInput {
   };
 }
 
-export function MembersClient({ initialMembers }: MembersClientProps) {
+export function MembersClient({ initialMembers, canManage }: MembersClientProps) {
   const [members, setMembers] = useState(initialMembers);
   const [selectedMemberId, setSelectedMemberId] = useState(
     initialMembers[0]?.id ?? null,
@@ -313,14 +314,16 @@ export function MembersClient({ initialMembers }: MembersClientProps) {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={startCreate}
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-zinc-800 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 active:translate-y-0"
-            >
-              <Plus className="h-4 w-4" aria-hidden />
-              Nouveau membre
-            </button>
+            {canManage && (
+              <button
+                type="button"
+                onClick={startCreate}
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-950 px-4 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-zinc-800 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900 active:translate-y-0"
+              >
+                <Plus className="h-4 w-4" aria-hidden />
+                Nouveau membre
+              </button>
+            )}
             <Link
               href="/"
               className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-800 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:translate-y-0"
@@ -341,9 +344,10 @@ export function MembersClient({ initialMembers }: MembersClientProps) {
           isSaving={isSaving}
           filters={filters}
           hasActiveFilters={hasActiveFilters}
+          canManage={canManage}
           onSelectMember={(id) => setSelectedMemberId(id)}
-          onEdit={startEdit}
-          onDeactivate={deactivateMember}
+          onEdit={canManage ? startEdit : undefined}
+          onDeactivate={canManage ? deactivateMember : undefined}
           onClearFilters={clearFilters}
           onFilterChange={(partial) =>
             setFilters((prev) => ({ ...prev, ...partial }))
@@ -398,7 +402,7 @@ export function MembersClient({ initialMembers }: MembersClientProps) {
         </aside>
       </div>
 
-      <Modal
+      {canManage && <Modal
         open={showForm}
         title={editingMemberId ? "Modifier le membre" : "Nouveau membre"}
         onClose={() => setShowForm(false)}
@@ -414,7 +418,7 @@ export function MembersClient({ initialMembers }: MembersClientProps) {
           onUpdateForm={updateForm}
           onTogglePole={togglePole}
         />
-      </Modal>
+      </Modal>}
     </main>
   );
 }

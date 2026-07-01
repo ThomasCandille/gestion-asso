@@ -8,7 +8,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { formatBudget } from "./event-format";
+import { formatBudget } from "./event-formatters";
 import type { ActivityDto } from "./activity-service";
 
 type ActivityView = ActivityDto;

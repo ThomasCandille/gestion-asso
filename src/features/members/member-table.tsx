@@ -13,7 +13,7 @@ import {
   type MemberStatus,
   type Pole,
 } from "./member-rules";
-import type { MemberView } from "./member-view";
+import type { MemberView } from "./member-dto";
 
 const statusStyles: Record<MemberStatus, string> = {
   ACTIVE: "bg-emerald-50 text-emerald-700 ring-emerald-200",
@@ -53,9 +53,10 @@ type Props = {
   isSaving: boolean;
   filters: MemberFiltersState;
   hasActiveFilters: boolean;
+  canManage?: boolean;
   onSelectMember: (id: string) => void;
-  onEdit: (member: MemberView) => void;
-  onDeactivate: (id: string) => void;
+  onEdit?: (member: MemberView) => void;
+  onDeactivate?: (id: string) => void;
   onClearFilters: () => void;
   onFilterChange: (partial: Partial<MemberFiltersState>) => void;
 };
@@ -78,6 +79,7 @@ export function MemberTable({
   isSaving,
   filters,
   hasActiveFilters,
+  canManage = false,
   onSelectMember,
   onEdit,
   onDeactivate,
@@ -205,13 +207,13 @@ export function MemberTable({
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">Statut</th>
                 <th className="px-4 py-3">Annee</th>
-                <th className="px-4 py-3">Actions</th>
+                {canManage ? <th className="px-4 py-3">Actions</th> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {filteredMembers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center">
+                  <td colSpan={canManage ? 6 : 5} className="px-4 py-10 text-center">
                     <p className="font-medium text-zinc-800">
                       Aucun membre ne correspond aux filtres.
                     </p>
@@ -271,33 +273,35 @@ export function MemberTable({
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-zinc-700">{member.year}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEdit(member);
-                          }}
-                          className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" aria-hidden />
-                          Modifier
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeactivate(member.id);
-                          }}
-                          disabled={isSaving || isInactive}
-                          className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          <UserRoundX className="h-3.5 w-3.5" aria-hidden />
-                          Desactiver
-                        </button>
-                      </div>
-                    </td>
+                    {canManage ? (
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEdit?.(member);
+                            }}
+                            className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                          >
+                            <Edit3 className="h-3.5 w-3.5" aria-hidden />
+                            Modifier
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeactivate?.(member.id);
+                            }}
+                            disabled={isSaving || isInactive}
+                            className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <UserRoundX className="h-3.5 w-3.5" aria-hidden />
+                            Desactiver
+                          </button>
+                        </div>
+                      </td>
+                    ) : null}
                   </tr>
                 );
               })}

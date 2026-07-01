@@ -16,6 +16,7 @@ export default async function BudgetPage() {
   const session = await getCurrentSession();
   if (!session) redirect("/auth/login");
 
+
   const canManage = hasPermission(session.role, "budget:manage");
 
   const [entries, summary, breakdown, forecast, events] = await Promise.all([

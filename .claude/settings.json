@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit *)",
+            "command": "if [ -f /home/thomas/Bureau/CLAUDE_cours/gestion_asso/package.json ]; then cd /home/thomas/Bureau/CLAUDE_cours/gestion_asso && npx tsc --noEmit && npx eslint . --max-warnings 0; fi",
+            "timeout": 120,
+            "statusMessage": "Verification tsc + eslint avant commit..."
+          }
+        ]
+      }
+    ]
+  }
+}
