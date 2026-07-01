@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Pole {
+  INTERNE
+  EXTERNE
+  COMMUNICATION
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  ALUMNI
+}
+
+enum Role {
+  MEMBER
+  POLE_LEAD
+  PRESIDENT
+  TREASURER
+  VICE_TREASURER
+  SECRETARY
+}
+
+enum EventType {
+  INTERNAL
+  EXTERNAL
+}
+
+enum EventStatus {
+  DRAFT
+  PLANNED
+  IN_PROGRESS
+  DONE
+  CANCELED
+}
+
+enum BudgetEntryType {
+  REVENUE
+  EXPENSE
+  FORECAST
+}
+
+enum CommunicationStatus {
+  IDEA
+  DRAFT
+  IN_REVIEW
+  SCHEDULED
+  PUBLISHED
+  CANCELLED
+}
+
+enum PostType {
+  POST
+  REEL
+  STORY
+  CAROUSEL
+}
+
+enum ExternalFileProvider {
+  GOOGLE_DRIVE
+  GOOGLE_DOCS
+}
+
+enum InventoryCategory {
+  FOOD
+  EQUIPMENT
+  DECORATION
+  CONSUMABLE
+  OTHER
+}
+
+model Member {
+  id              String       @id @default(cuid())
+  email           String       @unique
+  passwordHash    String?
+  firstName       String
+  lastName        String
+  phone           String
+  year            String
+  status          MemberStatus @default(ACTIVE)
+  role            Role         @default(MEMBER)
+  photoUrl        String?
+  joinedAt        DateTime?
+  internalNotes   String?
+  discordUsername String?
+  deactivatedAt   DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  eventRegistrations  EventRegistration[]
+  staffAssignments    StaffAssignment[]
+  communicationPosts  CommunicationPost[]
+  postAssignments     PostAssignee[]
+  memberPoles         MemberPole[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model MemberPole {
+  id        String   @id @default(cuid())
+  memberId  String
+  pole      Pole
+  createdAt DateTime @default(now())
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, pole])
+  @@index([pole])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  memberId  String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+  @@index([expiresAt])
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  type        EventType
+  status      EventStatus @default(DRAFT)
+  location    String?
+  startsAt    DateTime?
+  endsAt      DateTime?
+  budgetCents Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  activities    Activity[]
+  budgetEntries BudgetEntry[]
+  registrations EventRegistration[]
+  staff         StaffAssignment[]
+  campaigns     CommunicationCampaign[]
+  publications  CommunicationPost[]
+  externalFiles ExternalFileReference[]
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  eventId     String
+  title       String
+  description String?
+  rules       String?
+  prizes      String?
+  budgetCents Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  event         Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  staff         StaffAssignment[]
+  budgetEntries BudgetEntry[]
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  eventId   String
+  memberId  String
+  createdAt DateTime @default(now())
+
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
+}
+
+model StaffAssignment {
+  id         String   @id @default(cuid())
+  eventId    String
+  activityId String?
+  memberId   String
+  roleLabel  String?
+  createdAt  DateTime @default(now())
+
+  event    Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  activity Activity? @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  member   Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+model BudgetEntry {
+  id          String          @id @default(cuid())
+  eventId     String?
+  activityId  String?
+  type        BudgetEntryType
+  label       String
+  amountCents Int
+  occurredAt  DateTime?
+  createdAt   DateTime        @default(now())
+
+  event    Event?    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  activity Activity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  @@index([eventId])
+  @@index([type])
+  @@index([occurredAt])
+}
+
+model CommunicationCampaign {
+  id          String              @id @default(cuid())
+  eventId     String
+  title       String
+  description String?
+  status      CommunicationStatus @default(DRAFT)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  event Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  posts CommunicationPost[]
+
+  @@index([eventId])
+  @@index([status])
+}
+
+model CommunicationPost {
+  id               String              @id @default(cuid())
+  campaignId       String
+  eventId          String
+  authorId         String?
+  title            String
+  postType         PostType            @default(POST)
+  content          String?
+  mediaDescription String?
+  scheduledAt      DateTime?
+  publishedAt      DateTime?
+  status           CommunicationStatus @default(IDEA)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  campaign  CommunicationCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  event     Event                 @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  author    Member?               @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  assignees PostAssignee[]
+
+  @@index([campaignId])
+  @@index([eventId])
+  @@index([status])
+}
+
+model PostAssignee {
+  id        String   @id @default(cuid())
+  postId    String
+  memberId  String
+  createdAt DateTime @default(now())
+
+  post   CommunicationPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  member Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, memberId])
+  @@index([memberId])
+}
+
+model InventoryItem {
+  id          String            @id @default(cuid())
+  name        String
+  category    InventoryCategory @default(OTHER)
+  quantity    Int               @default(0)
+  unit        String?
+  minQuantity Int?
+  location    String?
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([category])
+}
+
+model ExternalFileReference {
+  id         String               @id @default(cuid())
+  eventId    String?
+  provider   ExternalFileProvider
+  externalId String
+  name       String
+  url        String
+  mimeType   String?
+  createdAt  DateTime             @default(now())
+
+  event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, externalId])
+}
