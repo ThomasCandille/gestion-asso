@@ -1,0 +1,2 @@
+{"timestamp":"2026-07-01T12:48:17.862Z","script":"build-communication-plan","input":{"eventTitle":"Journée de Noël","eventType":"EXTERNAL","hasStartsAt":false,"hasEndsAt":false},"output":{"campaignTitle":"Communication — Journée de Noël","postsCount":3}}
+{"timestamp":"2026-07-01T12:48:31.210Z","script":"validate-event","input":{"eventTitle":"Journée de Noël","activities":3,"posts":3},"output":{"valid":true,"missingFields":0,"warnings":0}}

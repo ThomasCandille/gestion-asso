@@ -1,6 +1,5 @@
-
 ---
-name: analyse dette technique
+name: analyse-dette-technique
 description : "Réalise un audit technique automatisé et structuré du projet — vérifie la présence des fichiers attendus par feature, la qualité des scripts déterministes et des tests, la cohérence RBAC sur 3 niveaux (route, service, page), les anti-patterns interdits, la qualité TypeScript, le code mort/duplications et les intégrations externes. Produit un rapport factuel, actionnable et priorisé (Critiques / Avertissements / Points d'attention) sans modifier le code."
 ---
 
