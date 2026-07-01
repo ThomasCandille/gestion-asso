@@ -18,7 +18,6 @@ export type EventFormState = {
   location: string;
   startsAt: string;
   endsAt: string;
-  budgetEuros: string;
 };
 
 type Props = {
@@ -107,12 +106,6 @@ export function EventFormSection({
             onChange={(v) => onUpdateForm("endsAt", v)}
           />
         </div>
-
-        <TextField
-          label="Budget (€)"
-          value={form.budgetEuros}
-          onChange={(v) => onUpdateForm("budgetEuros", v)}
-        />
 
         <label className="block space-y-1">
           <span className="text-xs font-medium text-zinc-600">Description</span>

@@ -1,4 +1,4 @@
-import type { MemberRole, MemberStatus, Pole } from "./member-rules";
+import type { MemberRole, MemberStatus, MemberYear, Pole } from "./member-rules";
 
 export type MemberView = {
   id: string;
@@ -6,7 +6,7 @@ export type MemberView = {
   lastName: string;
   email: string;
   phone: string;
-  year: string;
+  year: MemberYear;
   status: MemberStatus;
   role: MemberRole;
   poles: Pole[];
@@ -18,8 +18,9 @@ export type MemberView = {
 
 export type MemberViewPayload = Omit<
   MemberView,
-  "photoUrl" | "joinedAt" | "internalNotes" | "discordUsername"
+  "year" | "photoUrl" | "joinedAt" | "internalNotes" | "discordUsername"
 > & {
+  year: string;
   photoUrl?: string | null;
   joinedAt?: string | null;
   internalNotes?: string | null;
@@ -33,7 +34,7 @@ export function normalizeMemberView(member: MemberViewPayload): MemberView {
     lastName: member.lastName,
     email: member.email,
     phone: member.phone,
-    year: member.year,
+    year: member.year as MemberYear,
     status: member.status,
     role: member.role,
     poles: member.poles,

@@ -8,6 +8,7 @@ export type ActivityFormState = {
   rules: string;
   prizes: string;
   budgetEuros: string;
+  expectedRevenueEuros: string;
 };
 
 type Props = {
@@ -63,11 +64,21 @@ export function ActivityFormSection({
           onChange={(v) => onUpdateForm("prizes", v)}
         />
 
-        <TextField
-          label="Budget (€)"
-          value={form.budgetEuros}
-          onChange={(v) => onUpdateForm("budgetEuros", v)}
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <TextField
+            label="Budget (€)"
+            value={form.budgetEuros}
+            onChange={(v) => onUpdateForm("budgetEuros", v)}
+          />
+          <TextField
+            label="Recettes prevues (€)"
+            type="number"
+            min={0}
+            step={0.01}
+            value={form.expectedRevenueEuros}
+            onChange={(v) => onUpdateForm("expectedRevenueEuros", v)}
+          />
+        </div>
 
         <div className="flex gap-3 pt-2">
           <button

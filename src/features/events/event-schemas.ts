@@ -22,14 +22,6 @@ export const eventFormSchema = z
     location: z.string().trim().optional(),
     startsAt: z.string().optional(),
     endsAt: z.string().optional(),
-    budgetEuros: z
-      .string()
-      .regex(
-        /^\d+([.,]\d{1,2})?$/,
-        "Montant invalide (ex: 150 ou 150.50).",
-      )
-      .optional()
-      .default("0"),
   })
   .refine(
     (data) => {

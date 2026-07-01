@@ -94,47 +94,47 @@ function EventRow({ row, index }: { row: EventForecastRow; index: number }) {
 
         <dl className="mt-3 grid grid-cols-2 gap-2 border-t border-zinc-100 pt-3 text-sm sm:grid-cols-4">
           <div className="rounded bg-zinc-50 px-2.5 py-2">
-            <dt className="text-xs text-zinc-500">Budget alloué</dt>
-            <dd className="mt-0.5 font-medium tabular-nums text-zinc-900">
-              {formatCents(row.allocatedCents)}
+            <dt className="text-xs text-zinc-500">Dépenses prévues</dt>
+            <dd className="mt-0.5 font-medium tabular-nums text-red-700">
+              −{formatCents(row.remainingCents)}
+            </dd>
+          </div>
+          <div className="rounded bg-zinc-50 px-2.5 py-2">
+            <dt className="text-xs text-zinc-500">Recettes prévues</dt>
+            <dd className="mt-0.5 font-medium tabular-nums text-emerald-700">
+              {row.totalRevenueCents > 0
+                ? `+${formatCents(row.totalRevenueCents)}`
+                : "—"}
             </dd>
           </div>
           <div className="rounded bg-zinc-50 px-2.5 py-2">
             <dt className="text-xs text-zinc-500">Déjà dépensé</dt>
-            <dd className="mt-0.5 font-medium tabular-nums text-red-700">
-              −{formatCents(row.expenseCents)}
-            </dd>
-          </div>
-          <div className="rounded bg-zinc-50 px-2.5 py-2">
-            <dt className="text-xs text-zinc-500">Prévisions liées</dt>
-            <dd className="mt-0.5 font-medium tabular-nums text-amber-700">
-              {row.forecastEntryCents > 0
-                ? `+${formatCents(row.forecastEntryCents)}`
+            <dd className="mt-0.5 font-medium tabular-nums text-zinc-700">
+              {row.expenseCents > 0
+                ? `−${formatCents(row.expenseCents)}`
                 : "—"}
             </dd>
           </div>
           <div
             className={`rounded px-2.5 py-2 ${
-              row.remainingCents > 0
-                ? "bg-red-50"
-                : "bg-emerald-50"
+              row.netImpactCents >= 0 ? "bg-emerald-50" : "bg-red-50"
             }`}
           >
             <dt
               className={`text-xs ${
-                row.remainingCents > 0 ? "text-red-500" : "text-emerald-600"
+                row.netImpactCents >= 0 ? "text-emerald-600" : "text-red-500"
               }`}
             >
-              Impact sur solde
+              Impact net
             </dt>
             <dd
               className={`mt-0.5 font-semibold tabular-nums ${
-                row.remainingCents > 0 ? "text-red-700" : "text-emerald-700"
+                row.netImpactCents >= 0 ? "text-emerald-700" : "text-red-700"
               }`}
             >
-              {row.remainingCents > 0
-                ? `−${formatCents(row.remainingCents)}`
-                : "Soldé"}
+              {row.netImpactCents >= 0
+                ? `+${formatCents(row.netImpactCents)}`
+                : `−${formatCents(row.netImpactCents)}`}
             </dd>
           </div>
         </dl>
@@ -156,7 +156,7 @@ export function BudgetForecast({ forecast }: Props) {
   } = forecast;
 
   const totalEventImpact = upcomingEvents.reduce(
-    (sum, r) => sum + r.remainingCents,
+    (sum, r) => sum + r.netImpactCents,
     0,
   );
 
@@ -181,16 +181,23 @@ export function BudgetForecast({ forecast }: Props) {
 
         <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-            Coût prévu événements
+            Impact net événements
           </p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums text-red-700">
-            −{formatCents(totalEventImpact + freeEntriesForecastCents)}
+          <p
+            className={`mt-1 text-2xl font-semibold tabular-nums ${
+              totalEventImpact - freeEntriesForecastCents >= 0
+                ? "text-emerald-700"
+                : "text-red-700"
+            }`}
+          >
+            {totalEventImpact - freeEntriesForecastCents >= 0 ? "+" : "−"}
+            {formatCents(totalEventImpact - freeEntriesForecastCents)}
           </p>
           <p className="mt-1 text-xs text-zinc-400">
             {upcomingEvents.length} événement
             {upcomingEvents.length !== 1 ? "s" : ""} à venir
             {freeEntriesForecastCents > 0
-              ? ` + ${formatCents(freeEntriesForecastCents)} hors événement`
+              ? ` − ${formatCents(freeEntriesForecastCents)} hors événement`
               : ""}
           </p>
         </div>

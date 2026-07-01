@@ -10,8 +10,10 @@ import {
   poleValues,
   roleLabels,
   statusLabels,
+  yearValues,
   type MemberRole,
   type MemberStatus,
+  type MemberYear,
   type Pole,
 } from "./member-rules";
 import type { MemberFormInput } from "./member-schemas";
@@ -62,6 +64,7 @@ export function MemberFormSection({
 
         <TextField
           label="Email"
+          type="email"
           value={form.email}
           onChange={(v) => onUpdateForm("email", v)}
         />
@@ -69,14 +72,24 @@ export function MemberFormSection({
         <div className="grid grid-cols-2 gap-3">
           <TextField
             label="Telephone"
+            type="tel"
             value={form.phone}
             onChange={(v) => onUpdateForm("phone", v)}
           />
-          <TextField
-            label="Annee"
-            value={form.year}
-            onChange={(v) => onUpdateForm("year", v)}
-          />
+          <label className="space-y-1">
+            <span className="text-xs font-medium text-zinc-600">Annee</span>
+            <select
+              value={form.year}
+              onChange={(e) => onUpdateForm("year", e.target.value as MemberYear)}
+              className={controlClass}
+            >
+              {yearValues.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="grid grid-cols-2 gap-3">

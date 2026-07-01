@@ -35,7 +35,7 @@ const emptyForm: MemberFormInput = {
   lastName: "",
   email: "",
   phone: "",
-  year: "",
+  year: "A1",
   status: "ACTIVE",
   role: "MEMBER",
   poles: [],

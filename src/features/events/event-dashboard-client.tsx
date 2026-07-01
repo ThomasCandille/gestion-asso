@@ -27,6 +27,7 @@ const emptyForm: ActivityFormState = {
   rules: "",
   prizes: "",
   budgetEuros: "0",
+  expectedRevenueEuros: "0",
 };
 
 function toFormState(activity: ActivityView): ActivityFormState {
@@ -36,6 +37,7 @@ function toFormState(activity: ActivityView): ActivityFormState {
     rules: activity.rules ?? "",
     prizes: activity.prizes ?? "",
     budgetEuros: (activity.budgetCents / 100).toFixed(2),
+    expectedRevenueEuros: (activity.expectedRevenueCents / 100).toFixed(2),
   };
 }
 
@@ -378,8 +380,12 @@ export function EventDashboardClient({
                 <InfoItem label="Debut" value={formatDate(event.startsAt)} />
                 <InfoItem label="Fin" value={formatDate(event.endsAt)} />
                 <InfoItem
-                  label="Budget global"
-                  value={formatBudget(event.budgetCents)}
+                  label="Depenses prevues"
+                  value={formatBudget(event.totalExpenseCents)}
+                />
+                <InfoItem
+                  label="Recettes prevues"
+                  value={formatBudget(event.totalRevenueCents)}
                 />
                 {event.description ? (
                   <div className="rounded-lg bg-zinc-50 p-3">

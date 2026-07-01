@@ -136,7 +136,6 @@ model Event {
   location    String?
   startsAt    DateTime?
   endsAt      DateTime?
-  budgetCents Int         @default(0)
   sheetId     String?
   sheetUrl    String?
   createdAt   DateTime    @default(now())
@@ -158,11 +157,12 @@ model Activity {
   description String?
   rules       String?
   prizes      String?
-  budgetCents Int      @default(0)
-  sheetId     String?
-  sheetUrl    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  budgetCents          Int      @default(0)
+  expectedRevenueCents Int      @default(0)
+  sheetId              String?
+  sheetUrl             String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   event         Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
   staff         StaffAssignment[]

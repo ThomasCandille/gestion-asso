@@ -9,7 +9,8 @@ export type EventView = {
   location?: string;
   startsAt?: string;
   endsAt?: string;
-  budgetCents: number;
+  totalExpenseCents: number;
+  totalRevenueCents: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -34,7 +35,8 @@ export function normalizeEventView(event: EventViewPayload): EventView {
     location: event.location ?? undefined,
     startsAt: event.startsAt ? event.startsAt.slice(0, 10) : undefined,
     endsAt: event.endsAt ? event.endsAt.slice(0, 10) : undefined,
-    budgetCents: event.budgetCents,
+    totalExpenseCents: event.totalExpenseCents,
+    totalRevenueCents: event.totalRevenueCents,
     createdAt: event.createdAt,
     updatedAt: event.updatedAt,
   };

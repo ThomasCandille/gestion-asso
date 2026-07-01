@@ -4,9 +4,11 @@ import {
   memberRoleValues,
   memberStatusValues,
   poleValues,
+  yearValues,
 } from "./member-rules";
 
 export const poleSchema = z.enum(poleValues);
+export const memberYearSchema = z.enum(yearValues);
 export const memberRoleSchema = z.enum(memberRoleValues);
 export const memberStatusSchema = z.enum(memberStatusValues);
 
@@ -23,8 +25,13 @@ export const memberFormSchema = z
     firstName: z.string().trim().min(1, "Le prenom est obligatoire."),
     lastName: z.string().trim().min(1, "Le nom est obligatoire."),
     email: z.string().trim().email("Email invalide."),
-    phone: z.string().trim().min(1, "Le telephone est obligatoire."),
-    year: z.string().trim().min(1, "L'annee est obligatoire."),
+    phone: z
+      .string()
+      .trim()
+      .min(10, "Le telephone est obligatoire.")
+      .max(20, "Numero de telephone trop long.")
+      .regex(/^[\d\s+\-().]+$/, "Format de numero invalide."),
+    year: memberYearSchema,
     status: memberStatusSchema.default("ACTIVE"),
     role: memberRoleSchema.default("MEMBER"),
     poles: z.array(poleSchema).default([]),
@@ -68,7 +75,12 @@ export const memberSelfProfileSchema = z.object({
   firstName: z.string().trim().min(1, "Le prenom est obligatoire."),
   lastName: z.string().trim().min(1, "Le nom est obligatoire."),
   email: z.string().trim().email("Email invalide."),
-  phone: z.string().trim().min(1, "Le telephone est obligatoire."),
+  phone: z
+    .string()
+    .trim()
+    .min(10, "Le telephone est obligatoire.")
+    .max(20, "Numero de telephone trop long.")
+    .regex(/^[\d\s+\-().]+$/, "Format de numero invalide."),
   photoUrl: z
     .string()
     .trim()

@@ -4,7 +4,7 @@ import type { AppSession } from "@/server/auth/session";
 import { hasPermission } from "@/server/permissions";
 import type { EventType, EventStatus } from "./event-rules";
 import { isTerminalStatus, hasEventTypeAccess } from "./event-rules";
-import { parseEurosToCents, toOptionalDate } from "@/lib/formats";
+import { toOptionalDate } from "@/lib/formats";
 import {
   eventFiltersSchema,
   eventFormSchema,
@@ -21,8 +21,8 @@ const eventSelect = {
   location: true,
   startsAt: true,
   endsAt: true,
-  budgetCents: true,
   sheetId: true,
+  activities: { select: { budgetCents: true, expectedRevenueCents: true } },
   sheetUrl: true,
   createdAt: true,
   updatedAt: true,
@@ -39,7 +39,8 @@ export type EventDto = {
   location: string | null;
   startsAt: string | null;
   endsAt: string | null;
-  budgetCents: number;
+  totalExpenseCents: number;
+  totalRevenueCents: number;
   sheetId: string | null;
   sheetUrl: string | null;
   createdAt: string;
@@ -70,7 +71,8 @@ function toEventDto(event: EventRow): EventDto {
     location: event.location,
     startsAt: event.startsAt?.toISOString() ?? null,
     endsAt: event.endsAt?.toISOString() ?? null,
-    budgetCents: event.budgetCents,
+    totalExpenseCents: event.activities.reduce((sum, a) => sum + a.budgetCents, 0),
+    totalRevenueCents: event.activities.reduce((sum, a) => sum + a.expectedRevenueCents, 0),
     sheetId: event.sheetId,
     sheetUrl: event.sheetUrl,
     createdAt: event.createdAt.toISOString(),
@@ -134,7 +136,6 @@ export async function createEvent(actor: AppSession, input: unknown) {
       location: parsed.location || null,
       startsAt: toOptionalDate(parsed.startsAt),
       endsAt: toOptionalDate(parsed.endsAt),
-      budgetCents: parseEurosToCents(parsed.budgetEuros),
     },
     select: eventSelect,
   });
@@ -192,7 +193,6 @@ export async function updateEvent(
       location: parsed.location || null,
       startsAt: toOptionalDate(parsed.startsAt),
       endsAt: toOptionalDate(parsed.endsAt),
-      budgetCents: parseEurosToCents(parsed.budgetEuros),
     },
     select: eventSelect,
   });

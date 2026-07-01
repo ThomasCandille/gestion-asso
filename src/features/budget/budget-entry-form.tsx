@@ -64,6 +64,9 @@ export function BudgetEntryForm({
 
         <TextField
           label="Montant (€)"
+          type="number"
+          min={0}
+          step={0.01}
           value={form.amountEuros}
           onChange={(v) => onUpdateForm("amountEuros", v)}
         />

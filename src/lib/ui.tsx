@@ -64,11 +64,17 @@ export function TextField({
   value,
   onChange,
   type = "text",
+  min,
+  max,
+  step,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  min?: string | number;
+  max?: string | number;
+  step?: string | number;
 }) {
   return (
     <label className="block space-y-1">
@@ -76,6 +82,9 @@ export function TextField({
       <input
         type={type}
         value={value}
+        min={min}
+        max={max}
+        step={step}
         onChange={(e) => onChange(e.target.value)}
         className={controlClass}
       />

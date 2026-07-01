@@ -49,7 +49,6 @@ const emptyForm: EventFormState = {
   location: "",
   startsAt: "",
   endsAt: "",
-  budgetEuros: "0",
 };
 
 function toFormState(event: EventView): EventFormState {
@@ -61,7 +60,6 @@ function toFormState(event: EventView): EventFormState {
     location: event.location ?? "",
     startsAt: event.startsAt ?? "",
     endsAt: event.endsAt ?? "",
-    budgetEuros: (event.budgetCents / 100).toFixed(2),
   };
 }
 
@@ -494,7 +492,8 @@ export function EventsClient({ initialEvents, canManage }: EventsClientProps) {
                 <InfoItem label="Lieu" value={selectedEvent.location ?? "—"} />
                 <InfoItem label="Debut" value={formatDate(selectedEvent.startsAt)} />
                 <InfoItem label="Fin" value={formatDate(selectedEvent.endsAt)} />
-                <InfoItem label="Budget" value={formatBudget(selectedEvent.budgetCents)} />
+                <InfoItem label="Depenses prevues" value={formatBudget(selectedEvent.totalExpenseCents)} />
+                <InfoItem label="Recettes prevues" value={formatBudget(selectedEvent.totalRevenueCents)} />
                 {selectedEvent.description ? (
                   <div className="rounded-lg bg-zinc-50 p-3">
                     <dt className="text-zinc-500">Description</dt>

@@ -16,6 +16,7 @@ const activitySelect = {
   rules: true,
   prizes: true,
   budgetCents: true,
+  expectedRevenueCents: true,
   sheetId: true,
   sheetUrl: true,
   createdAt: true,
@@ -42,6 +43,7 @@ export type ActivityDto = {
   rules: string | null;
   prizes: string | null;
   budgetCents: number;
+  expectedRevenueCents: number;
   sheetId: string | null;
   sheetUrl: string | null;
   staff: { memberId: string; firstName: string; lastName: string }[];
@@ -72,6 +74,7 @@ function toActivityDto(activity: ActivityRow): ActivityDto {
     rules: activity.rules,
     prizes: activity.prizes,
     budgetCents: activity.budgetCents,
+    expectedRevenueCents: activity.expectedRevenueCents,
     sheetId: activity.sheetId,
     sheetUrl: activity.sheetUrl,
     staff: activity.staff.map((s) => ({
@@ -140,6 +143,7 @@ export async function createActivity(
       rules: parsed.rules || null,
       prizes: parsed.prizes || null,
       budgetCents: parseEurosToCents(parsed.budgetEuros),
+      expectedRevenueCents: parseEurosToCents(parsed.expectedRevenueEuros),
     },
     select: activitySelect,
   });
@@ -182,6 +186,7 @@ export async function updateActivity(
       rules: parsed.rules || null,
       prizes: parsed.prizes || null,
       budgetCents: parseEurosToCents(parsed.budgetEuros),
+      expectedRevenueCents: parseEurosToCents(parsed.expectedRevenueEuros),
     },
     select: activitySelect,
   });

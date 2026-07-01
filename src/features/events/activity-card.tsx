@@ -69,6 +69,11 @@ export function ActivityCard({
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {activity.expectedRevenueCents > 0 ? (
+            <span className="text-sm font-medium text-emerald-700">
+              +{formatBudget(activity.expectedRevenueCents)}
+            </span>
+          ) : null}
           <span className="text-sm font-medium text-zinc-700">
             {formatBudget(activity.budgetCents)}
           </span>

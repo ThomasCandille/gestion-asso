@@ -13,6 +13,11 @@ export const activityFormSchema = z.object({
     .regex(/^\d+([.,]\d{1,2})?$/, "Montant invalide (ex: 150 ou 150.50).")
     .optional()
     .default("0"),
+  expectedRevenueEuros: z
+    .string()
+    .regex(/^\d+([.,]\d{1,2})?$/, "Montant invalide (ex: 150 ou 150.50).")
+    .optional()
+    .default("0"),
 });
 
 export type ActivityFormInput = z.infer<typeof activityFormSchema>;

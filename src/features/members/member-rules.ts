@@ -1,4 +1,5 @@
 export const poleValues = ["INTERNE", "EXTERNE", "COMMUNICATION"] as const;
+export const yearValues = ["A1", "A2", "A3", "A4", "A5"] as const;
 export const memberRoleValues = [
   "MEMBER",
   "POLE_LEAD",
@@ -10,6 +11,7 @@ export const memberRoleValues = [
 export const memberStatusValues = ["ACTIVE", "INACTIVE", "ALUMNI"] as const;
 
 export type Pole = (typeof poleValues)[number];
+export type MemberYear = (typeof yearValues)[number];
 export type MemberRole = (typeof memberRoleValues)[number];
 export type MemberStatus = (typeof memberStatusValues)[number];
 

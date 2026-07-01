@@ -65,9 +65,11 @@ export type EventForecastRow = {
   eventStatus: EventStatus;
   startsAt: string | null;
   allocatedCents: number;
+  totalRevenueCents: number;
   expenseCents: number;
   forecastEntryCents: number;
   remainingCents: number;
+  netImpactCents: number;
   runningBalanceCents: number;
 };
 
@@ -163,7 +165,7 @@ export async function getEventBudgetBreakdown(): Promise<EventBudgetRow[]> {
       id: true,
       title: true,
       type: true,
-      budgetCents: true,
+      activities: { select: { budgetCents: true, expectedRevenueCents: true } },
       budgetEntries: {
         select: { type: true, amountCents: true },
       },
@@ -182,11 +184,13 @@ export async function getEventBudgetBreakdown(): Promise<EventBudgetRow[]> {
       else if (entry.type === "FORECAST") forecastCents += entry.amountCents;
     }
 
+    const allocatedCents = event.activities.reduce((sum, a) => sum + a.budgetCents, 0);
+
     return {
       eventId: event.id,
       eventTitle: event.title,
       eventType: event.type as EventType,
-      allocatedCents: event.budgetCents,
+      allocatedCents,
       revenueCents,
       expenseCents,
       forecastCents,
@@ -209,7 +213,7 @@ export async function getBudgetForecast(): Promise<BudgetForecast> {
         type: true,
         status: true,
         startsAt: true,
-        budgetCents: true,
+        activities: { select: { budgetCents: true, expectedRevenueCents: true } },
         budgetEntries: {
           select: { type: true, amountCents: true },
         },
@@ -241,11 +245,14 @@ export async function getBudgetForecast(): Promise<BudgetForecast> {
       if (entry.type === "EXPENSE") expenseCents += entry.amountCents;
       else if (entry.type === "FORECAST") forecastEntryCents += entry.amountCents;
     }
+    const allocatedCents = event.activities.reduce((sum, a) => sum + a.budgetCents, 0);
+    const totalRevenueCents = event.activities.reduce((sum, a) => sum + a.expectedRevenueCents, 0);
     const remainingCents = Math.max(
       0,
-      event.budgetCents - expenseCents + forecastEntryCents,
+      allocatedCents - expenseCents + forecastEntryCents,
     );
-    runningBalance -= remainingCents;
+    const netImpactCents = totalRevenueCents - remainingCents;
+    runningBalance += netImpactCents;
 
     return {
       eventId: event.id,
@@ -253,10 +260,12 @@ export async function getBudgetForecast(): Promise<BudgetForecast> {
       eventType: event.type as EventType,
       eventStatus: event.status as EventStatus,
       startsAt: event.startsAt?.toISOString() ?? null,
-      allocatedCents: event.budgetCents,
+      allocatedCents,
+      totalRevenueCents,
       expenseCents,
       forecastEntryCents,
       remainingCents,
+      netImpactCents,
       runningBalanceCents: runningBalance,
     };
   });
