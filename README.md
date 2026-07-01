@@ -18,19 +18,18 @@ Le brief fonctionnel est dans `Projet.md`. Les règles de travail pour Claude Co
 
 ### Prérequis
 
-- Node.js LTS
+- Node.js ≥ 20
 - Docker (pour PostgreSQL)
 
-### Installation
+### Démarrage
 
 ```bash
-npm install
-docker compose up -d       # lance PostgreSQL
-cp .env.example .env.local # puis renseigner les variables
-npx prisma migrate deploy
-npx prisma db seed
-npm run dev
+npm install       # installe les dépendances
+npm run setup     # docker + migrations + seed (crée .env.local si absent)
+npm run dev       # lance le serveur sur http://localhost:3000
 ```
+
+`setup` crée automatiquement `.env.local` depuis `.env.example` si le fichier n'existe pas encore. Pour les intégrations Google Drive, renseignez les variables correspondantes avant de lancer `setup`.
 
 ### Commandes utiles
 
@@ -41,8 +40,9 @@ npm run lint          # ESLint
 npm run typecheck     # tsc --noEmit
 npm run test          # Vitest (tests unitaires)
 npm run test:e2e      # Playwright
-npm run prisma:migrate
-npm run prisma:generate
+npm run prisma:migrate   # nouvelle migration (dev)
+npm run prisma:generate  # régénère le client Prisma
+npm run db:seed          # reseed sans relancer Docker
 ```
 
 ### Connexion en démo
