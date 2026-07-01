@@ -1,67 +1,84 @@
-# IIMPACT - Gestion association
+# IIMPACT — Gestion association
 
-Application web de gestion interne pour l'association evenementielle IIMPACT.
+Application web de gestion interne pour l'association événementielle IIMPACT. Elle centralise la gestion des membres, des événements et activités, du budget, de l'inventaire, du calendrier de communication et des documents Google Drive.
 
-Le brief fonctionnel est dans `Projet.md`. Les regles de travail pour Codex sont dans `../AGENTS.md`.
+Le brief fonctionnel est dans `Projet.md`. Les règles de travail pour Claude Code sont dans `CLAUDE.md`.
 
-## Stack initiale
+## Stack
 
-- Next.js App Router
-- TypeScript strict
-- Tailwind CSS
-- PostgreSQL
-- Prisma 7
-- Auth.js / NextAuth comme socle d'authentification interne
-- Zod
-- Vitest
-- Playwright
-- Google Drive et Google Docs pour le stockage documentaire
+- Next.js App Router (TypeScript strict)
+- Tailwind CSS + shadcn/ui
+- PostgreSQL + Prisma 7
+- Zod + React Hook Form
+- Vitest + Playwright
+- Auth maison (session cookie, RBAC par rôle et pôle)
+- Google Drive API pour les documents
 
-## Installation
+## Lancer le projet
+
+### Prérequis
+
+- Node.js LTS
+- Docker (pour PostgreSQL)
+
+### Installation
 
 ```bash
 npm install
-```
-
-## Configuration locale
-
-```bash
-cp .env.example .env.local
-```
-
-Renseigner ensuite les variables locales. Ne jamais commiter `.env.local`.
-
-Pour les commandes Prisma, exposer aussi `DATABASE_URL` dans l'environnement ou utiliser un fichier `.env` local ignore par git.
-
-## Commandes npm
-
-```bash
+docker compose up -d       # lance PostgreSQL
+cp .env.example .env.local # puis renseigner les variables
+npx prisma migrate deploy
+npx prisma db seed
 npm run dev
-npm run build
-npm run lint
-npm run typecheck
-npm run test
-npm run test:e2e
-npm run prisma:validate
-npm run prisma:generate
-npm run prisma:migrate
 ```
+
+### Commandes utiles
+
+```bash
+npm run dev           # serveur de développement
+npm run build         # build de production
+npm run lint          # ESLint
+npm run typecheck     # tsc --noEmit
+npm run test          # Vitest (tests unitaires)
+npm run test:e2e      # Playwright
+npm run prisma:migrate
+npm run prisma:generate
+```
+
+### Connexion en démo
+
+L'authentification utilise un cookie de profil. Trois profils sont disponibles en développement :
+
+| Profil       | Rôle         | Accès                          |
+|--------------|--------------|-------------------------------|
+| `bureau`     | PRESIDENT    | Tout                          |
+| `responsable`| POLE_LEAD    | Son pôle uniquement           |
+| `membre`     | MEMBER       | Lecture                       |
+
+Poser le cookie `demo-profile=bureau` (ou `responsable` / `membre`) via les DevTools ou la page `/auth/login`.
 
 ## Structure
 
-- `src/app` : routes Next.js et route handlers.
-- `src/server` : env, DB, auth, permissions et services serveur.
-- `src/lib` : utilitaires partages.
-- `prisma` : schema et migrations.
-- `docs` : architecture, permissions, modele de donnees et integrations.
-- `e2e` : tests Playwright.
+```
+src/app           routes Next.js et route handlers
+src/features      domaines métier (membres, events, budget, inventaire, communication, documents)
+src/server        env, DB, auth, permissions
+src/lib           utilitaires partagés (formats, modal, ui)
+prisma            schéma et migrations
+.claude/skills    skills Claude Code (creer_un_evenement, technical_debt)
+docs              architecture, permissions, modèle de données
+e2e               tests Playwright
+```
 
-Voir aussi `docs/project-schema.md` pour les schemas Mermaid du socle initialise.
+## Scripts déterministes
 
-## Etat actuel
+Les règles métier critiques sont extraites en fonctions pures testées indépendamment de la base :
 
-Le projet est initialise. Le module membres contient une premiere interface
-`/membres`, les schemas de validation, les routes API et le modele Prisma.
-
-Le branchement complet sur l'authentification et la base PostgreSQL reste a
-finaliser.
+| Fichier | Fonctions |
+|---|---|
+| `features/budget/budget-rules.ts` | `computeBudgetBalance` |
+| `features/inventory/inventory-rules.ts` | `isLowStock` |
+| `features/members/member-rules.ts` | `canMemberRegisterForEvent`, `hasPoleIntersection` |
+| `features/members/member-schemas.ts` | validation RBAC pôles/rôles |
+| `server/permissions.ts` | `hasPermission`, `canManagePole` |
+| `.claude/skills/creer_un_evenement/` | `validateEventPlan`, `buildDefaultCommunicationPlan` |

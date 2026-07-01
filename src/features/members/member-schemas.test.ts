@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { canMemberRegisterForEvent } from "./member-rules";
+import {
+  canMemberRegisterForEvent,
+  hasPoleIntersection,
+} from "./member-rules";
 import { memberFormSchema } from "./member-schemas";
 
 const baseMember = {
@@ -40,5 +43,26 @@ describe("canMemberRegisterForEvent", () => {
     expect(canMemberRegisterForEvent("ACTIVE")).toBe(true);
     expect(canMemberRegisterForEvent("INACTIVE")).toBe(false);
     expect(canMemberRegisterForEvent("ALUMNI")).toBe(false);
+  });
+});
+
+describe("hasPoleIntersection", () => {
+  it("retourne true si au moins un pole est commun", () => {
+    expect(hasPoleIntersection(["INTERNE"], ["INTERNE", "EXTERNE"])).toBe(true);
+  });
+
+  it("retourne false si aucun pole commun", () => {
+    expect(hasPoleIntersection(["INTERNE"], ["EXTERNE"])).toBe(false);
+  });
+
+  it("retourne false si l'un des tableaux est vide", () => {
+    expect(hasPoleIntersection([], ["INTERNE"])).toBe(false);
+    expect(hasPoleIntersection(["INTERNE"], [])).toBe(false);
+  });
+
+  it("retourne true si les deux ont COMMUNICATION", () => {
+    expect(
+      hasPoleIntersection(["COMMUNICATION"], ["INTERNE", "COMMUNICATION"]),
+    ).toBe(true);
   });
 });
