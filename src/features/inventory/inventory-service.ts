@@ -2,6 +2,7 @@ import { prisma } from "@/server/db/client";
 import { hasPermission } from "@/server/permissions";
 import type { AppSession } from "@/server/auth/session";
 import type { InventoryCategory } from "./inventory-rules";
+import { inventoryItemFormSchema } from "./inventory-schemas";
 
 export class InventoryPermissionError extends Error {
   constructor() {
@@ -78,26 +79,19 @@ export async function listInventoryItems(): Promise<InventoryItemDto[]> {
 
 export async function createInventoryItem(
   actor: AppSession,
-  input: {
-    name: string;
-    category: InventoryCategory;
-    quantity: number;
-    unit?: string;
-    minQuantity?: number;
-    location?: string;
-    notes?: string;
-  },
+  input: unknown,
 ): Promise<InventoryItemDto> {
   assertCanManage(actor);
+  const parsed = inventoryItemFormSchema.parse(input);
   const item = await prisma.inventoryItem.create({
     data: {
-      name: input.name,
-      category: input.category,
-      quantity: input.quantity,
-      unit: input.unit ?? null,
-      minQuantity: input.minQuantity ?? null,
-      location: input.location ?? null,
-      notes: input.notes ?? null,
+      name: parsed.name,
+      category: parsed.category as InventoryCategory,
+      quantity: parsed.quantity as number,
+      unit: parsed.unit ?? null,
+      minQuantity: (parsed.minQuantity as number | undefined) ?? null,
+      location: parsed.location ?? null,
+      notes: parsed.notes ?? null,
     },
     select,
   });
@@ -107,20 +101,21 @@ export async function createInventoryItem(
 export async function updateInventoryItem(
   actor: AppSession,
   itemId: string,
-  input: {
-    name?: string;
-    category?: InventoryCategory;
-    quantity?: number;
-    unit?: string | null;
-    minQuantity?: number | null;
-    location?: string | null;
-    notes?: string | null;
-  },
+  input: unknown,
 ): Promise<InventoryItemDto> {
   assertCanManage(actor);
+  const parsed = inventoryItemFormSchema.parse(input);
   const item = await prisma.inventoryItem.update({
     where: { id: itemId },
-    data: input,
+    data: {
+      name: parsed.name,
+      category: parsed.category as InventoryCategory,
+      quantity: parsed.quantity as number,
+      unit: parsed.unit ?? null,
+      minQuantity: (parsed.minQuantity as number | undefined) ?? null,
+      location: parsed.location ?? null,
+      notes: parsed.notes ?? null,
+    },
     select,
   });
   return toDto(item);

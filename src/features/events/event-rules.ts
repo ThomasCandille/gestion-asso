@@ -49,3 +49,13 @@ export function hasEventTypeAccess(
     (eventType === "EXTERNAL" && actor.poles.includes("EXTERNE"))
   );
 }
+
+export function canRegisterForEvent(
+  actor: { poles: readonly string[] },
+  eventType: EventType,
+  canManageEvents: boolean,
+): boolean {
+  if (canManageEvents) return true;
+  if (eventType === "EXTERNAL") return true;
+  return actor.poles.includes("INTERNE");
+}

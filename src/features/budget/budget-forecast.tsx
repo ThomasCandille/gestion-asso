@@ -2,6 +2,7 @@
 
 import { CalendarClock, TrendingDown, TrendingUp } from "lucide-react";
 import { Badge } from "@/lib/ui";
+import { formatCents } from "@/lib/formats";
 import {
   eventStatusLabels,
   eventStatusStyles,
@@ -9,13 +10,6 @@ import {
   eventTypeStyles,
 } from "../events/event-rules";
 import type { BudgetForecast, EventForecastRow } from "./budget-service";
-
-function formatCents(cents: number) {
-  return Math.abs(cents / 100).toLocaleString("fr-FR", {
-    style: "currency",
-    currency: "EUR",
-  });
-}
 
 function formatDate(iso: string | null) {
   if (!iso) return "Date inconnue";
@@ -42,7 +36,7 @@ function BalanceChip({ cents }: { cents: number }) {
         <TrendingDown className="h-3 w-3" aria-hidden />
       )}
       {positive ? "+" : "−"}
-      {formatCents(cents)}
+      {formatCents(Math.abs(cents))}
     </span>
   );
 }
@@ -133,8 +127,8 @@ function EventRow({ row, index }: { row: EventForecastRow; index: number }) {
               }`}
             >
               {row.netImpactCents >= 0
-                ? `+${formatCents(row.netImpactCents)}`
-                : `−${formatCents(row.netImpactCents)}`}
+                ? `+${formatCents(Math.abs(row.netImpactCents))}`
+                : `−${formatCents(Math.abs(row.netImpactCents))}`}
             </dd>
           </div>
         </dl>
@@ -174,7 +168,7 @@ export function BudgetForecast({ forecast }: Props) {
             }`}
           >
             {currentBalanceCents >= 0 ? "+" : "−"}
-            {formatCents(currentBalanceCents)}
+            {formatCents(Math.abs(currentBalanceCents))}
           </p>
           <p className="mt-1 text-xs text-zinc-400">Recettes − dépenses réelles</p>
         </div>
@@ -191,7 +185,7 @@ export function BudgetForecast({ forecast }: Props) {
             }`}
           >
             {totalEventImpact - freeEntriesForecastCents >= 0 ? "+" : "−"}
-            {formatCents(totalEventImpact - freeEntriesForecastCents)}
+            {formatCents(Math.abs(totalEventImpact - freeEntriesForecastCents))}
           </p>
           <p className="mt-1 text-xs text-zinc-400">
             {upcomingEvents.length} événement
@@ -222,7 +216,7 @@ export function BudgetForecast({ forecast }: Props) {
             }`}
           >
             {projectedBalanceCents >= 0 ? "+" : "−"}
-            {formatCents(projectedBalanceCents)}
+            {formatCents(Math.abs(projectedBalanceCents))}
           </p>
           <p
             className={`mt-1 text-xs ${
@@ -261,7 +255,7 @@ export function BudgetForecast({ forecast }: Props) {
                 }`}
               >
                 {currentBalanceCents >= 0 ? "+" : "−"}
-                {formatCents(currentBalanceCents)}
+                {formatCents(Math.abs(currentBalanceCents))}
               </span>
             </span>
           </div>

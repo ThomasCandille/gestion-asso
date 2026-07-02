@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeBudgetBalance } from "./budget-rules";
+import { computeBudgetBalance } from "./budget-scripts";
 
 describe("computeBudgetBalance", () => {
   it("retourne des zéros pour un tableau vide", () => {

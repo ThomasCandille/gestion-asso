@@ -7,7 +7,7 @@ import { listActivities } from "@/features/events/activity-service";
 import { listMembers } from "@/features/members/member-service";
 import { getCurrentSession } from "@/server/auth/session";
 import { hasPermission } from "@/server/permissions";
-import type { EventType } from "@/features/events/event-rules";
+import { canRegisterForEvent, type EventType } from "@/features/events/event-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -43,16 +43,14 @@ export default async function EventDashboardPage({ params }: Props) {
     lastName: m.lastName,
   }));
 
+  const canManageEvents = hasPermission(session.role, "events:manage");
   const canManage =
-    hasPermission(session.role, "events:manage") &&
+    canManageEvents &&
     (session.role !== "POLE_LEAD" ||
       (event.type === "INTERNAL" && session.poles.includes("INTERNE")) ||
       (event.type === "EXTERNAL" && session.poles.includes("EXTERNE")));
 
-  const canRegister =
-    event.type === ("EXTERNAL" as EventType) ||
-    hasPermission(session.role, "events:manage") ||
-    session.poles.includes("INTERNE");
+  const canRegister = canRegisterForEvent(session, event.type as EventType, canManageEvents);
 
   return (
     <EventDashboardClient

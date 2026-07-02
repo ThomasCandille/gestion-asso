@@ -292,7 +292,7 @@ export async function PATCH(req: Request, { params }: Params) {
 - Enum Prisma : `InventoryCategory` (FOOD, EQUIPMENT, DECORATION, CONSUMABLE, OTHER)
 - Types TS dans `src/features/inventory/inventory-rules.ts`
 - Permission `inventory:manage` : PRESIDENT uniquement
-- Helper `isLowStock(quantity, minQuantity)` dans `inventory-rules.ts`
+- Helper `isLowStock(quantity, minQuantity)` dans `scripts/inventory-scripts.ts` (re-exporte par `inventory-rules.ts`)
 
 ### Commandes slash disponibles
 
@@ -305,7 +305,7 @@ Invoquer avec `/nom-commande` dans Claude Code :
 - `/nettoyer` — passer en revue le code mort et les duplications
 - `/test <domaine>` — generer les tests Vitest (regles pures, permissions, schemas)
 - `/rbac` — auditer la coherence des permissions sur les 3 niveaux (service, route, page)
-- `/deterministe <domaine>` — extraire un script deterministe dans `*-rules.ts` et generer les tests Vitest
+- `/deterministe <domaine>` — extraire un script deterministe dans `scripts/<domaine>-scripts.ts` et generer les tests Vitest
 
 ## Scripts deterministes et hooks
 
@@ -316,12 +316,14 @@ Chaque domaine metier doit contenir au moins un script deterministe extrait et c
 Un script deterministe est une fonction pure sans effets de bord : pas d'acces BDD, pas d'appel HTTP, pas de date dynamique. Il calcule un resultat a partir de ses seuls arguments.
 
 Exemples types :
-- `isLowStock(quantity, minQuantity)` dans `inventory-rules.ts`
-- `canRegister(member, event, existingRegistrations)` dans `registrations-rules.ts`
-- `computeBudgetBalance(incomes, expenses)` dans `budget-rules.ts`
+- `isLowStock(quantity, minQuantity)` dans `src/features/inventory/scripts/inventory-scripts.ts`
+- `canRegister(member, event, existingRegistrations)` dans `src/features/registrations/scripts/registrations-scripts.ts`
+- `computeBudgetBalance(incomes, expenses)` dans `src/features/budget/scripts/budget-scripts.ts`
 
 Regles :
-- Le script doit etre dans le fichier `*-rules.ts` du domaine, pas dans un service.
+- Le script doit etre dans `src/features/<domaine>/scripts/<domaine>-scripts.ts`, pas dans un service ni dans `*-rules.ts`.
+- Le fichier `*-rules.ts` re-exporte le script (`export { fn } from "./scripts/<domaine>-scripts"`) pour la compatibilite des imports existants.
+- Le test doit etre dans `src/features/<domaine>/scripts/<domaine>-scripts.test.ts`, a cote du script.
 - Les tests doivent couvrir le cas nominal, les cas limites et les cas d'erreur.
 - Un script extrait mais non teste n'est pas valide.
 

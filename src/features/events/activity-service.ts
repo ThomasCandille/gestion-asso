@@ -2,8 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 import type { AppSession } from "@/server/auth/session";
 import { hasPermission } from "@/server/permissions";
-import type { EventType } from "./event-rules";
-import { hasEventTypeAccess } from "./event-rules";
+import { canRegisterForEvent, hasEventTypeAccess, type EventType } from "./event-rules";
 import { activityFormSchema } from "./activity-schemas";
 import { parseEurosToCents } from "@/lib/formats";
 import { createActivitySheet } from "@/server/integrations/activities-sheet";
@@ -95,10 +94,7 @@ function assertCanManageActivities(actor: AppSession, eventType: EventType) {
 }
 
 function canRegisterAsStaff(actor: AppSession, eventType: EventType): boolean {
-  if (hasPermission(actor.role, "events:manage")) return true;
-  if (eventType === "EXTERNAL") return true;
-  if (eventType === "INTERNAL") return actor.poles.includes("INTERNE");
-  return false;
+  return canRegisterForEvent(actor, eventType, hasPermission(actor.role, "events:manage"));
 }
 
 

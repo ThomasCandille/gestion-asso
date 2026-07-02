@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isLowStock } from "./inventory-rules";
+import { isLowStock } from "./inventory-scripts";
 
 describe("isLowStock", () => {
   it("retourne false si minQuantity est null", () => {
