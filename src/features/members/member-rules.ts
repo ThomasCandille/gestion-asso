@@ -61,3 +61,28 @@ export function hasPoleIntersection(
 ) {
   return left.some((pole) => right.includes(pole));
 }
+
+export const roleStyles: Record<MemberRole, string> = {
+  MEMBER: "bg-zinc-100 text-zinc-700 ring-zinc-200",
+  POLE_LEAD: "bg-amber-50 text-amber-700 ring-amber-200",
+  PRESIDENT: "bg-purple-50 text-purple-700 ring-purple-200",
+  TREASURER: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  VICE_TREASURER: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  SECRETARY: "bg-sky-50 text-sky-700 ring-sky-200",
+};
+
+export const statusStyles: Record<MemberStatus, string> = {
+  ACTIVE: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  INACTIVE: "bg-zinc-100 text-zinc-600 ring-zinc-200",
+  ALUMNI: "bg-blue-50 text-blue-700 ring-blue-200",
+};
+
+export function memberFullName(member: { firstName: string; lastName: string }) {
+  return `${member.firstName} ${member.lastName}`;
+}
+
+export function memberPoleText(member: { poles: Pole[] }) {
+  return member.poles.length > 0
+    ? member.poles.map((pole) => poleLabels[pole]).join(", ")
+    : "Bureau";
+}

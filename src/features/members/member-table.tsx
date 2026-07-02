@@ -3,32 +3,21 @@
 import { Edit3, RotateCcw, Search, UserRoundX } from "lucide-react";
 import { Badge, controlClass, StatCard } from "@/lib/ui";
 import {
+  memberFullName,
+  memberPoleText,
   memberRoleValues,
   memberStatusValues,
   poleLabels,
   poleValues,
   roleLabels,
+  roleStyles,
   statusLabels,
+  statusStyles,
   type MemberRole,
   type MemberStatus,
   type Pole,
 } from "./member-rules";
 import type { MemberView } from "./member-dto";
-
-const statusStyles: Record<MemberStatus, string> = {
-  ACTIVE: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  INACTIVE: "bg-zinc-100 text-zinc-600 ring-zinc-200",
-  ALUMNI: "bg-blue-50 text-blue-700 ring-blue-200",
-};
-
-const roleStyles: Record<MemberRole, string> = {
-  MEMBER: "bg-zinc-100 text-zinc-700 ring-zinc-200",
-  POLE_LEAD: "bg-amber-50 text-amber-700 ring-amber-200",
-  PRESIDENT: "bg-purple-50 text-purple-700 ring-purple-200",
-  TREASURER: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  VICE_TREASURER: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  SECRETARY: "bg-sky-50 text-sky-700 ring-sky-200",
-};
 
 export type MemberFiltersState = {
   search: string;
@@ -60,16 +49,6 @@ type Props = {
   onClearFilters: () => void;
   onFilterChange: (partial: Partial<MemberFiltersState>) => void;
 };
-
-function fullName(member: MemberView) {
-  return `${member.firstName} ${member.lastName}`;
-}
-
-function poleText(member: MemberView) {
-  return member.poles.length > 0
-    ? member.poles.map((pole) => poleLabels[pole]).join(", ")
-    : "Bureau";
-}
 
 export function MemberTable({
   stats,
@@ -252,7 +231,7 @@ export function MemberTable({
                         className="rounded-md text-left outline-none transition focus-visible:ring-4 focus-visible:ring-blue-100"
                       >
                         <span className="block font-medium text-zinc-950 transition group-hover:text-blue-700">
-                          {fullName(member)}
+                          {memberFullName(member)}
                         </span>
                         <span className="block text-xs text-zinc-500">
                           {member.email}
@@ -260,7 +239,7 @@ export function MemberTable({
                       </button>
                     </td>
                     <td className="px-4 py-3 text-zinc-700">
-                      {poleText(member)}
+                      {memberPoleText(member)}
                     </td>
                     <td className="px-4 py-3">
                       <Badge className={roleStyles[member.role]}>

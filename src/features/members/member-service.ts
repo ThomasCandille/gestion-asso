@@ -1,5 +1,3 @@
-import { createHash, randomBytes } from "node:crypto";
-import type { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 import type { AppSession } from "@/server/auth/session";
 import { hashPassword } from "@/server/auth/password";
@@ -10,82 +8,28 @@ import {
 import {
   hasPoleIntersection,
   isOfficeRole,
-  type MemberRole,
-  type MemberStatus,
   type Pole,
 } from "./member-rules";
 import {
-  memberFiltersSchema,
   memberFormSchema,
   memberSelfProfileSchema,
-  type MemberFilters,
   type MemberFormInput,
 } from "./member-schemas";
 import { toOptionalDate } from "@/lib/formats";
+import {
+  memberInclude,
+  toMemberDto,
+  type MemberDto,
+} from "./member-query";
+import {
+  MemberPermissionError,
+  MemberRuleError,
+} from "./member-errors";
 
-const memberInclude = {
-  memberPoles: {
-    select: {
-      pole: true,
-    },
-  },
-} satisfies Prisma.MemberInclude;
-
-type MemberWithPoles = Prisma.MemberGetPayload<{
-  include: typeof memberInclude;
-}>;
-
-export type MemberDto = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  year: string;
-  status: MemberStatus;
-  role: MemberRole;
-  poles: Pole[];
-  photoUrl: string | null;
-  joinedAt: string | null;
-  internalNotes: string | null;
-  discordUsername: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export class MemberPermissionError extends Error {
-  constructor(message = "Action membre non autorisee.") {
-    super(message);
-    this.name = "MemberPermissionError";
-  }
-}
-
-export class MemberRuleError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "MemberRuleError";
-  }
-}
-
-function toMemberDto(member: MemberWithPoles): MemberDto {
-  return {
-    id: member.id,
-    firstName: member.firstName,
-    lastName: member.lastName,
-    email: member.email,
-    phone: member.phone,
-    year: member.year,
-    status: member.status as MemberStatus,
-    role: member.role as MemberRole,
-    poles: member.memberPoles.map((memberPole) => memberPole.pole as Pole),
-    photoUrl: member.photoUrl,
-    joinedAt: member.joinedAt?.toISOString() ?? null,
-    internalNotes: member.internalNotes,
-    discordUsername: member.discordUsername,
-    createdAt: member.createdAt.toISOString(),
-    updatedAt: member.updatedAt.toISOString(),
-  };
-}
+export type { MemberDto } from "./member-query";
+export { listMembers, getMemberById } from "./member-query";
+export { requestPasswordReset, confirmPasswordReset } from "./member-password-service";
+export { MemberPermissionError, MemberRuleError } from "./member-errors";
 
 function assertCanCreateMember(actor: AppSession) {
   if (!isOfficeRole(actor.role)) {
@@ -99,17 +43,13 @@ function assertCanManageMember(
   actor: AppSession,
   targetPoles: readonly Pole[],
 ) {
-  if (isOfficeRole(actor.role)) {
-    return;
-  }
-
+  if (isOfficeRole(actor.role)) return;
   if (
     actor.role === "POLE_LEAD" &&
     hasPoleIntersection(actor.poles, targetPoles)
   ) {
     return;
   }
-
   throw new MemberPermissionError();
 }
 
@@ -125,75 +65,21 @@ async function assertPoleLeadLimit(
   input: MemberFormInput,
   memberIdToIgnore?: string,
 ) {
-  if (input.role !== "POLE_LEAD") {
-    return;
-  }
+  if (input.role !== "POLE_LEAD") return;
 
   for (const pole of input.poles) {
     const count = await prisma.member.count({
       where: {
         role: "POLE_LEAD",
         id: memberIdToIgnore ? { not: memberIdToIgnore } : undefined,
-        memberPoles: {
-          some: {
-            pole,
-          },
-        },
+        memberPoles: { some: { pole } },
       },
     });
-
     if (count >= 2) {
       throw new MemberRuleError(`Le pole ${pole} a deja deux responsables.`);
     }
   }
 }
-
-function buildMemberWhere(filters: MemberFilters): Prisma.MemberWhereInput {
-  const parsedFilters = memberFiltersSchema.parse(filters);
-
-  return {
-    status: parsedFilters.status,
-    role: parsedFilters.role,
-    year: parsedFilters.year,
-    memberPoles: parsedFilters.pole
-      ? {
-          some: {
-            pole: parsedFilters.pole,
-          },
-        }
-      : undefined,
-    OR: parsedFilters.search
-      ? [
-          {
-            firstName: { contains: parsedFilters.search, mode: "insensitive" },
-          },
-          { lastName: { contains: parsedFilters.search, mode: "insensitive" } },
-          { email: { contains: parsedFilters.search, mode: "insensitive" } },
-          { phone: { contains: parsedFilters.search, mode: "insensitive" } },
-        ]
-      : undefined,
-  };
-}
-
-export async function listMembers(filters: MemberFilters = {}) {
-  const members = await prisma.member.findMany({
-    where: buildMemberWhere(filters),
-    include: memberInclude,
-    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-  });
-
-  return members.map(toMemberDto);
-}
-
-export async function getMemberById(memberId: string) {
-  const member = await prisma.member.findUnique({
-    where: { id: memberId },
-    include: memberInclude,
-  });
-
-  return member ? toMemberDto(member) : null;
-}
-
 
 export async function createMember(actor: AppSession, input: unknown) {
   assertCanCreateMember(actor);
@@ -322,63 +208,4 @@ export async function deactivateMember(actor: AppSession, memberId: string) {
     console.error("[sheet] removeMemberRow failed:", e),
   );
   return dto;
-}
-
-function hashToken(token: string) {
-  return createHash("sha256").update(token).digest("hex");
-}
-
-export async function requestPasswordReset(email: string) {
-  const member = await prisma.member.findUnique({
-    where: { email },
-  });
-
-  if (!member) {
-    return null;
-  }
-
-  const token = randomBytes(32).toString("hex");
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 30);
-
-  await prisma.passwordResetToken.create({
-    data: {
-      memberId: member.id,
-      tokenHash: hashToken(token),
-      expiresAt,
-    },
-  });
-
-  return { token, expiresAt };
-}
-
-export async function confirmPasswordReset(token: string, password: string) {
-  const tokenHash = hashToken(token);
-  const passwordResetToken = await prisma.passwordResetToken.findFirst({
-    where: {
-      tokenHash,
-      usedAt: null,
-      expiresAt: {
-        gt: new Date(),
-      },
-    },
-  });
-
-  if (!passwordResetToken) {
-    throw new MemberRuleError(
-      "Le lien de reinitialisation est invalide ou expire.",
-    );
-  }
-
-  const passwordHash = await hashPassword(password);
-
-  await prisma.$transaction([
-    prisma.member.update({
-      where: { id: passwordResetToken.memberId },
-      data: { passwordHash },
-    }),
-    prisma.passwordResetToken.update({
-      where: { id: passwordResetToken.id },
-      data: { usedAt: new Date() },
-    }),
-  ]);
 }

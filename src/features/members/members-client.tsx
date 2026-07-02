@@ -1,18 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, UserRound } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
-import { Badge, InfoItem } from "@/lib/ui";
 import { Modal } from "@/lib/modal";
 import { readApiError } from "@/lib/api";
 import {
   isOfficeRole,
+  memberFullName,
   poleLabels,
-  roleLabels,
-  statusLabels,
   type MemberRole,
-  type MemberStatus,
   type Pole,
 } from "./member-rules";
 import { memberFormSchema } from "./member-schemas";
@@ -23,6 +20,7 @@ import {
 } from "./member-dto";
 import { MemberTable, type MemberFiltersState } from "./member-table";
 import { MemberFormSection } from "./member-form";
+import { MemberDetailPanel } from "./member-detail-panel";
 import type { MemberFormInput } from "./member-schemas";
 
 type MembersClientProps = {
@@ -45,31 +43,6 @@ const emptyForm: MemberFormInput = {
   discordUsername: "",
   password: "",
 };
-
-const roleStyles: Record<MemberRole, string> = {
-  MEMBER: "bg-zinc-100 text-zinc-700 ring-zinc-200",
-  POLE_LEAD: "bg-amber-50 text-amber-700 ring-amber-200",
-  PRESIDENT: "bg-purple-50 text-purple-700 ring-purple-200",
-  TREASURER: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  VICE_TREASURER: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  SECRETARY: "bg-sky-50 text-sky-700 ring-sky-200",
-};
-
-const statusStyles: Record<MemberStatus, string> = {
-  ACTIVE: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  INACTIVE: "bg-zinc-100 text-zinc-600 ring-zinc-200",
-  ALUMNI: "bg-blue-50 text-blue-700 ring-blue-200",
-};
-
-function fullName(member: MemberView) {
-  return `${member.firstName} ${member.lastName}`;
-}
-
-function poleText(member: MemberView) {
-  return member.poles.length > 0
-    ? member.poles.map((pole) => poleLabels[pole]).join(", ")
-    : "Bureau";
-}
 
 function toFormState(member: MemberView): MemberFormInput {
   return {
@@ -184,10 +157,6 @@ export function MembersClient({ initialMembers, canManage }: MembersClientProps)
     setShowForm(true);
   }
 
-  function clearFilters() {
-    setFilters({ search: "", pole: "ALL", role: "ALL", status: "ALL", year: "ALL" });
-  }
-
   function updateForm<K extends keyof MemberFormInput>(
     field: K,
     value: MemberFormInput[K],
@@ -289,7 +258,7 @@ export function MembersClient({ initialMembers, canManage }: MembersClientProps)
       setMembers((current) =>
         current.map((m) => (m.id === memberId ? savedMember : m)),
       );
-      if (member) setFeedback(`${fullName(member)} est maintenant inactif.`);
+      if (member) setFeedback(`${memberFullName(member)} est maintenant inactif.`);
       setErrors([]);
     } catch (error) {
       setErrors([
@@ -348,77 +317,38 @@ export function MembersClient({ initialMembers, canManage }: MembersClientProps)
           onSelectMember={(id) => setSelectedMemberId(id)}
           onEdit={canManage ? startEdit : undefined}
           onDeactivate={canManage ? deactivateMember : undefined}
-          onClearFilters={clearFilters}
+          onClearFilters={() =>
+            setFilters({ search: "", pole: "ALL", role: "ALL", status: "ALL", year: "ALL" })
+          }
           onFilterChange={(partial) =>
             setFilters((prev) => ({ ...prev, ...partial }))
           }
         />
 
         <aside>
-          <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-zinc-300">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-700 ring-1 ring-blue-100">
-                <UserRound className="h-5 w-5" aria-hidden />
-              </div>
-              <div>
-                <h2 className="font-semibold text-zinc-950">
-                  {selectedMember ? fullName(selectedMember) : "Aucun membre"}
-                </h2>
-                <p className="text-sm text-zinc-500">
-                  {selectedMember
-                    ? selectedMember.email
-                    : "Selectionner un membre"}
-                </p>
-              </div>
-            </div>
-
-            {selectedMember ? (
-              <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                <InfoItem label="Telephone" value={selectedMember.phone} />
-                <InfoItem label="Annee" value={selectedMember.year} />
-                <InfoItem label="Role" value={roleLabels[selectedMember.role]} />
-                <InfoItem label="Statut" value={statusLabels[selectedMember.status]} />
-                <div className="col-span-2 rounded-lg bg-zinc-50 p-3">
-                  <dt className="text-zinc-500">Poles</dt>
-                  <dd className="font-medium text-zinc-900">{poleText(selectedMember)}</dd>
-                </div>
-                {selectedMember.discordUsername ? (
-                  <div className="col-span-2 rounded-lg bg-zinc-50 p-3">
-                    <dt className="text-zinc-500">Discord</dt>
-                    <dd className="font-medium text-zinc-900">{selectedMember.discordUsername}</dd>
-                  </div>
-                ) : null}
-                <div className="col-span-2 flex gap-2">
-                  <Badge className={roleStyles[selectedMember.role]}>
-                    {roleLabels[selectedMember.role]}
-                  </Badge>
-                  <Badge className={statusStyles[selectedMember.status]}>
-                    {statusLabels[selectedMember.status]}
-                  </Badge>
-                </div>
-              </dl>
-            ) : null}
-          </section>
+          <MemberDetailPanel member={selectedMember} />
         </aside>
       </div>
 
-      {canManage && <Modal
-        open={showForm}
-        title={editingMemberId ? "Modifier le membre" : "Nouveau membre"}
-        onClose={() => setShowForm(false)}
-      >
-        <MemberFormSection
-          editingMemberId={editingMemberId}
-          form={form}
-          errors={errors}
-          feedback={feedback}
-          isSaving={isSaving}
+      {canManage && (
+        <Modal
+          open={showForm}
+          title={editingMemberId ? "Modifier le membre" : "Nouveau membre"}
           onClose={() => setShowForm(false)}
-          onSubmit={submitMember}
-          onUpdateForm={updateForm}
-          onTogglePole={togglePole}
-        />
-      </Modal>}
+        >
+          <MemberFormSection
+            editingMemberId={editingMemberId}
+            form={form}
+            errors={errors}
+            feedback={feedback}
+            isSaving={isSaving}
+            onClose={() => setShowForm(false)}
+            onSubmit={submitMember}
+            onUpdateForm={updateForm}
+            onTogglePole={togglePole}
+          />
+        </Modal>
+      )}
     </main>
   );
 }

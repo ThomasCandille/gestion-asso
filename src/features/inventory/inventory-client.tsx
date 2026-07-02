@@ -1,23 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Edit3,
-  Package,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Package, Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { Badge, controlClass, StatCard } from "@/lib/ui";
+import { controlClass, StatCard } from "@/lib/ui";
 import { Modal } from "@/lib/modal";
 import { readApiError } from "@/lib/api";
 import {
   inventoryCategoryEmoji,
   inventoryCategoryLabels,
-  inventoryCategoryStyles,
   inventoryCategoryValues,
   isLowStock,
   type InventoryCategory,
@@ -25,6 +16,7 @@ import {
 import { inventoryItemFormSchema, type InventoryItemFormInput } from "./inventory-schemas";
 import type { InventoryItemDto } from "./inventory-service";
 import { InventoryItemForm } from "./inventory-form";
+import { InventoryCategorySection } from "./inventory-category-section";
 
 type Props = {
   initialItems: InventoryItemDto[];
@@ -51,12 +43,6 @@ function toFormState(item: InventoryItemDto): InventoryItemFormInput {
     location: item.location ?? "",
     notes: item.notes ?? "",
   };
-}
-
-function quantityLabel(item: InventoryItemDto) {
-  return item.unit
-    ? `${item.quantity} ${item.unit}`
-    : `${item.quantity}`;
 }
 
 export function InventoryClient({ initialItems, canManage }: Props) {
@@ -172,13 +158,13 @@ export function InventoryClient({ initialItems, canManage }: Props) {
       if (!response.ok) throw new Error(await readApiError(response));
 
       const data = (await response.json()) as { item: InventoryItemDto };
-      const saved = data.item;
-
       setItems((current) => {
-        if (!editingId) return [...current, saved].sort((a, b) =>
-          a.category.localeCompare(b.category) || a.name.localeCompare(b.name),
-        );
-        return current.map((it) => (it.id === editingId ? saved : it));
+        if (!editingId)
+          return [...current, data.item].sort(
+            (a, b) =>
+              a.category.localeCompare(b.category) || a.name.localeCompare(b.name),
+          );
+        return current.map((it) => (it.id === editingId ? data.item : it));
       });
       setErrors([]);
       setShowForm(false);
@@ -217,9 +203,7 @@ export function InventoryClient({ initialItems, canManage }: Props) {
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-zinc-500">
               IIMPACT
             </p>
-            <h1 className="mt-1 text-2xl font-semibold text-zinc-950">
-              Inventaire
-            </h1>
+            <h1 className="mt-1 text-2xl font-semibold text-zinc-950">Inventaire</h1>
           </div>
           <div className="flex items-center gap-3">
             {canManage ? (
@@ -244,7 +228,6 @@ export function InventoryClient({ initialItems, canManage }: Props) {
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-        {/* Stats */}
         <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-5">
           <StatCard label="Total articles" value={stats.total} />
           {stats.lowStock > 0 ? (
@@ -268,7 +251,6 @@ export function InventoryClient({ initialItems, canManage }: Props) {
           ))}
         </div>
 
-        {/* Filters */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
@@ -308,7 +290,6 @@ export function InventoryClient({ initialItems, canManage }: Props) {
           </div>
         </div>
 
-        {/* Empty state */}
         {filteredItems.length === 0 ? (
           <div className="rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-16 text-center">
             <Package className="mx-auto h-10 w-10 text-zinc-300" aria-hidden />
@@ -329,114 +310,20 @@ export function InventoryClient({ initialItems, canManage }: Props) {
           </div>
         ) : null}
 
-        {/* Category sections */}
         {visibleCategories.map((cat) => {
           const catItems = groupedItems[cat];
           if (catItems.length === 0) return null;
           return (
-            <section key={cat}>
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg" aria-hidden>
-                    {inventoryCategoryEmoji[cat]}
-                  </span>
-                  <h2 className="font-semibold text-zinc-950">
-                    {inventoryCategoryLabels[cat]}
-                  </h2>
-                  <span className="rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">
-                    {catItems.length}
-                  </span>
-                </div>
-                {canManage ? (
-                  <button
-                    type="button"
-                    onClick={() => startCreate(cat)}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500"
-                  >
-                    <Plus className="h-3.5 w-3.5" aria-hidden />
-                    Ajouter
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-                <table className="w-full text-left text-sm">
-                  <thead className="border-b border-zinc-100 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500">
-                    <tr>
-                      <th className="px-4 py-3">Article</th>
-                      <th className="px-4 py-3">Quantité</th>
-                      <th className="px-4 py-3 hidden sm:table-cell">Emplacement</th>
-                      <th className="px-4 py-3 hidden md:table-cell">Notes</th>
-                      {canManage ? <th className="px-4 py-3">Actions</th> : null}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100">
-                    {catItems.map((item) => {
-                      const low = isLowStock(item.quantity, item.minQuantity);
-                      return (
-                        <tr key={item.id} className="group hover:bg-zinc-50">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-zinc-950">
-                                {item.name}
-                              </span>
-                              {low ? (
-                                <span
-                                  title={`Stock bas — seuil : ${item.minQuantity}`}
-                                  className="text-amber-500"
-                                >
-                                  <AlertTriangle className="h-3.5 w-3.5" aria-label="Stock bas" />
-                                </span>
-                              ) : null}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge
-                              className={
-                                low
-                                  ? "bg-amber-50 text-amber-700 ring-amber-200"
-                                  : inventoryCategoryStyles[item.category]
-                              }
-                            >
-                              {quantityLabel(item)}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3 text-zinc-500 hidden sm:table-cell">
-                            {item.location ?? "—"}
-                          </td>
-                          <td className="px-4 py-3 text-zinc-500 hidden md:table-cell max-w-xs truncate">
-                            {item.notes ?? "—"}
-                          </td>
-                          {canManage ? (
-                            <td className="px-4 py-3">
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => startEdit(item)}
-                                  className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                                >
-                                  <Edit3 className="h-3.5 w-3.5" aria-hidden />
-                                  Modifier
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => deleteItem(item.id)}
-                                  disabled={isSaving}
-                                  className="inline-flex h-8 items-center gap-1 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:opacity-40"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                                  Supprimer
-                                </button>
-                              </div>
-                            </td>
-                          ) : null}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <InventoryCategorySection
+              key={cat}
+              category={cat}
+              items={catItems}
+              isSaving={isSaving}
+              canManage={canManage}
+              onAddItem={startCreate}
+              onEditItem={startEdit}
+              onDeleteItem={deleteItem}
+            />
           );
         })}
       </div>

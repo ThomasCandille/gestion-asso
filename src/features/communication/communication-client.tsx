@@ -5,12 +5,21 @@ import { ArrowLeft, Megaphone, Plus } from "lucide-react";
 import Link from "next/link";
 import { StatCard } from "@/lib/ui";
 import { Modal } from "@/lib/modal";
-import { readApiError } from "@/lib/api";
 import type { CampaignDto, PostDto } from "./communication-service";
 import type { CampaignFormInput, PostFormInput } from "./communication-schemas";
 import { CampaignCard } from "./campaign-card";
 import { CampaignForm } from "./campaign-form";
 import { PostForm } from "./post-form";
+import {
+  apiAddAssignee,
+  apiCreateCampaign,
+  apiCreatePost,
+  apiDeleteCampaign,
+  apiDeletePost,
+  apiRemoveAssignee,
+  apiUpdateCampaign,
+  apiUpdatePost,
+} from "./communication-api";
 
 type EventOption = { id: string; title: string };
 type MemberOption = { id: string; firstName: string; lastName: string };
@@ -73,9 +82,7 @@ export function CommClient({
   ).length;
 
   function updateCampaignInState(updated: CampaignDto) {
-    setCampaigns((prev) =>
-      prev.map((c) => (c.id === updated.id ? updated : c)),
-    );
+    setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
   }
 
   function updatePostInState(updated: PostDto) {
@@ -113,30 +120,12 @@ export function CommClient({
     setIsSaving(true);
     setCampaignErrors([]);
     setCampaignFeedback(null);
-
     try {
-      const payload = {
-        ...campaignForm,
-        description: campaignForm.description || undefined,
-      };
-
       if (editingCampaignId) {
-        const res = await fetch(`/api/communication/campaigns/${editingCampaignId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error(await readApiError(res));
-        const { campaign } = (await res.json()) as { campaign: CampaignDto };
+        const campaign = await apiUpdateCampaign(editingCampaignId, campaignForm);
         updateCampaignInState(campaign);
       } else {
-        const res = await fetch("/api/communication/campaigns", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error(await readApiError(res));
-        const { campaign } = (await res.json()) as { campaign: CampaignDto };
+        const campaign = await apiCreateCampaign(campaignForm);
         setCampaigns((prev) => [campaign, ...prev]);
         setExpandedId(campaign.id);
       }
@@ -151,10 +140,7 @@ export function CommClient({
   async function deleteCampaign(campaignId: string) {
     if (!confirm("Supprimer cette campagne et tous ses posts ?")) return;
     try {
-      const res = await fetch(`/api/communication/campaigns/${campaignId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error(await readApiError(res));
+      await apiDeleteCampaign(campaignId);
       setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
     } catch (err) {
       setCampaignErrors([(err as Error).message]);
@@ -193,38 +179,12 @@ export function CommClient({
     setIsSaving(true);
     setPostErrors([]);
     setPostFeedback(null);
-
     try {
-      const payload = {
-        ...postForm,
-        content: postForm.content || undefined,
-        mediaDescription: postForm.mediaDescription || undefined,
-        scheduledAt: postForm.scheduledAt || undefined,
-      };
-
       if (editingPostId) {
-        const res = await fetch(
-          `/api/communication/campaigns/${targetCampaignId}/posts/${editingPostId}`,
-          {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          },
-        );
-        if (!res.ok) throw new Error(await readApiError(res));
-        const { post } = (await res.json()) as { post: PostDto };
+        const post = await apiUpdatePost(targetCampaignId, editingPostId, postForm);
         updatePostInState(post);
       } else {
-        const res = await fetch(
-          `/api/communication/campaigns/${targetCampaignId}/posts`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          },
-        );
-        if (!res.ok) throw new Error(await readApiError(res));
-        const { post } = (await res.json()) as { post: PostDto };
+        const post = await apiCreatePost(targetCampaignId, postForm);
         setCampaigns((prev) =>
           prev.map((c) =>
             c.id === targetCampaignId ? { ...c, posts: [...c.posts, post] } : c,
@@ -243,13 +203,8 @@ export function CommClient({
     if (!confirm("Supprimer ce post ?")) return;
     const post = campaigns.flatMap((c) => c.posts).find((p) => p.id === postId);
     if (!post) return;
-
     try {
-      const res = await fetch(
-        `/api/communication/campaigns/${post.campaignId}/posts/${postId}`,
-        { method: "DELETE" },
-      );
-      if (!res.ok) throw new Error(await readApiError(res));
+      await apiDeletePost(post.campaignId, postId);
       setCampaigns((prev) =>
         prev.map((c) => ({
           ...c,
@@ -265,16 +220,7 @@ export function CommClient({
     const post = campaigns.flatMap((c) => c.posts).find((p) => p.id === postId);
     if (!post) return;
     try {
-      const res = await fetch(
-        `/api/communication/campaigns/${post.campaignId}/posts/${postId}/assignees`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ memberId }),
-        },
-      );
-      if (!res.ok) throw new Error(await readApiError(res));
-      const { post: updated } = (await res.json()) as { post: PostDto };
+      const updated = await apiAddAssignee(post.campaignId, postId, memberId);
       updatePostInState(updated);
     } catch (err) {
       setPostErrors([(err as Error).message]);
@@ -285,16 +231,7 @@ export function CommClient({
     const post = campaigns.flatMap((c) => c.posts).find((p) => p.id === postId);
     if (!post) return;
     try {
-      const res = await fetch(
-        `/api/communication/campaigns/${post.campaignId}/posts/${postId}/assignees`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ memberId }),
-        },
-      );
-      if (!res.ok) throw new Error(await readApiError(res));
-      const { post: updated } = (await res.json()) as { post: PostDto };
+      const updated = await apiRemoveAssignee(post.campaignId, postId, memberId);
       updatePostInState(updated);
     } catch (err) {
       setPostErrors([(err as Error).message]);

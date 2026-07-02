@@ -3,16 +3,16 @@
 import { useState } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
-import { StatCard } from "@/lib/ui";
 import { Modal } from "@/lib/modal";
 import { readApiError } from "@/lib/api";
-import { formatCents } from "@/lib/formats";
 import { budgetEntryFormSchema, type BudgetEntryFormInput } from "./budget-schemas";
 import type { BudgetEntryDto, BudgetForecast, BudgetSummary, EventBudgetRow } from "./budget-service";
 import { BudgetEntryForm } from "./budget-entry-form";
 import { BudgetTable, type BudgetTableFilters } from "./budget-table";
 import { BudgetEventBreakdown } from "./budget-event-breakdown";
 import { BudgetForecast as BudgetForecastView } from "./budget-forecast";
+import { BudgetSummaryCards } from "./budget-summary-cards";
+import { recomputeBreakdown, recomputeSummary } from "./budget-utils";
 
 type Tab = "overview" | "forecast" | "entries";
 
@@ -67,43 +67,10 @@ export function BudgetClient({
     tableFilters.eventId !== "ALL" ||
     tableFilters.search !== "";
 
-  function recomputeSummary(nextEntries: BudgetEntryDto[]): BudgetSummary {
-    let revenueCents = 0;
-    let expenseCents = 0;
-    let forecastCents = 0;
-    for (const e of nextEntries) {
-      if (e.type === "REVENUE") revenueCents += e.amountCents;
-      else if (e.type === "EXPENSE") expenseCents += e.amountCents;
-      else if (e.type === "FORECAST") forecastCents += e.amountCents;
-    }
-    return {
-      revenueCents,
-      expenseCents,
-      forecastCents,
-      balanceCents: revenueCents - expenseCents,
-      forecastBalanceCents: revenueCents - expenseCents - forecastCents,
-    };
-  }
-
-  function recomputeBreakdown(nextEntries: BudgetEntryDto[]): EventBudgetRow[] {
-    return breakdown.map((row) => {
-      const eventEntries = nextEntries.filter((e) => e.eventId === row.eventId);
-      let revenueCents = 0;
-      let expenseCents = 0;
-      let forecastCents = 0;
-      for (const e of eventEntries) {
-        if (e.type === "REVENUE") revenueCents += e.amountCents;
-        else if (e.type === "EXPENSE") expenseCents += e.amountCents;
-        else if (e.type === "FORECAST") forecastCents += e.amountCents;
-      }
-      return {
-        ...row,
-        revenueCents,
-        expenseCents,
-        forecastCents,
-        balanceCents: revenueCents - expenseCents,
-      };
-    });
+  function updateEntries(nextEntries: BudgetEntryDto[]) {
+    setEntries(nextEntries);
+    setSummary(recomputeSummary(nextEntries));
+    setBreakdown(recomputeBreakdown(nextEntries, breakdown));
   }
 
   function startCreate() {
@@ -162,15 +129,10 @@ export function BudgetClient({
       if (!response.ok) throw new Error(await readApiError(response));
 
       const data = (await response.json()) as { entry: BudgetEntryDto };
-      const saved = data.entry;
-
       const nextEntries = editingId
-        ? entries.map((en) => (en.id === editingId ? saved : en))
-        : [saved, ...entries];
-
-      setEntries(nextEntries);
-      setSummary(recomputeSummary(nextEntries));
-      setBreakdown(recomputeBreakdown(nextEntries));
+        ? entries.map((en) => (en.id === editingId ? data.entry : en))
+        : [data.entry, ...entries];
+      updateEntries(nextEntries);
       setErrors([]);
       setShowForm(false);
     } catch (err) {
@@ -191,9 +153,7 @@ export function BudgetClient({
       if (!response.ok) throw new Error(await readApiError(response));
 
       const nextEntries = entries.filter((e) => e.id !== entryId);
-      setEntries(nextEntries);
-      setSummary(recomputeSummary(nextEntries));
-      setBreakdown(recomputeBreakdown(nextEntries));
+      updateEntries(nextEntries);
 
       if (editingId === entryId) {
         setEditingId(null);
@@ -208,9 +168,6 @@ export function BudgetClient({
     }
   }
 
-  const balancePositive = summary.balanceCents >= 0;
-  const forecastPositive = summary.forecastBalanceCents >= 0;
-
   return (
     <main className="min-h-screen bg-zinc-50">
       <header className="border-b border-zinc-200 bg-white">
@@ -219,9 +176,7 @@ export function BudgetClient({
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-zinc-500">
               IIMPACT
             </p>
-            <h1 className="mt-1 text-2xl font-semibold text-zinc-950">
-              Budget
-            </h1>
+            <h1 className="mt-1 text-2xl font-semibold text-zinc-950">Budget</h1>
           </div>
           <Link
             href="/"
@@ -234,47 +189,7 @@ export function BudgetClient({
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Solde réel
-            </p>
-            <p
-              className={`mt-1 text-2xl font-semibold tabular-nums ${
-                balancePositive ? "text-emerald-700" : "text-red-700"
-              }`}
-            >
-              {balancePositive ? "+" : "−"}
-              {formatCents(Math.abs(summary.balanceCents))}
-            </p>
-          </div>
-          <StatCard
-            label="Recettes"
-            value={Math.round(summary.revenueCents / 100)}
-            tone="emerald"
-          />
-          <StatCard
-            label="Dépenses"
-            value={Math.round(summary.expenseCents / 100)}
-            tone="zinc"
-          />
-          <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Solde prévisionnel
-            </p>
-            <p
-              className={`mt-1 text-2xl font-semibold tabular-nums ${
-                forecastPositive ? "text-emerald-700" : "text-amber-700"
-              }`}
-            >
-              {forecastPositive ? "+" : "−"}
-              {formatCents(Math.abs(summary.forecastBalanceCents))}
-            </p>
-            <p className="mt-0.5 text-xs text-zinc-400">
-              inclut {formatCents(summary.forecastCents)} de prévisions
-            </p>
-          </div>
-        </div>
+        <BudgetSummaryCards summary={summary} />
 
         <div className="mb-4 flex w-fit gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm">
           {(
